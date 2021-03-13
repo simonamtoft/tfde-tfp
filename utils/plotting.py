@@ -17,7 +17,7 @@ def plot_contours(data, distributions, limit, title, nc):
         A plot of the contours of the distributions and the dataset points.
     """
     plt.figure()
-    plt.plot(data[:, 0], data[:, 1], 'ko')
+    plt.plot(data[:, 0], data[:, 1], 'ko',alpha=0.1)
 
     delta = 0.025
     x = np.arange(-limit, limit, delta)
@@ -32,6 +32,7 @@ def plot_contours(data, distributions, limit, title, nc):
     plt.title(title)
     plt.tight_layout()
     plt.show()
+    return None
 
 
 def plot_density(distributions, limit, title, nc):
@@ -67,3 +68,4 @@ def plot_density(distributions, limit, title, nc):
     plt.title(title)
     plt.tight_layout()
     plt.show()
+    return None

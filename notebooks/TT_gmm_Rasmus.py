@@ -28,60 +28,60 @@ K = 3 # Number of components
 
 
 #%% Unit test (For K = 3)
-# #Initialize parameters randomly
-# np.random.seed(2)
+#Initialize parameters randomly
+np.random.seed(2)
 
-# Wk1k0 = np.random.rand(K,K)
-# Wk1k0 = Wk1k0/np.sum(Wk1k0,axis=0)
+Wk1k0 = np.random.rand(K,K)
+Wk1k0 = Wk1k0/np.sum(Wk1k0,axis=0)
 
-# Wk2k1 = np.random.rand(K,K)
-# # Wk2k1 = Wk2k1/np.sum(Wk2k1)
-# Wk2k1 = Wk2k1/np.sum(Wk2k1,axis=0)
+Wk2k1 = np.random.rand(K,K)
+# Wk2k1 = Wk2k1/np.sum(Wk2k1)
+Wk2k1 = Wk2k1/np.sum(Wk2k1,axis=0)
 
-# Wk0 = np.random.rand(K)
-# Wk0 = Wk0/np.sum(Wk0)
-# sigma = np.random.uniform(0,3,(K,K))
+Wk0 = np.random.rand(K)
+Wk0 = Wk0/np.sum(Wk0)
+sigma = np.random.uniform(0,3,(K,K))
 
-# mu = np.random.uniform(-4,4,(K,K))
+mu = np.random.uniform(-4,4,(K,K))
 
-# # Set number of points and limits
-# n_points = 1000
-# lim = 10
+# Set number of points and limits
+n_points = 1000
+lim = 10
 
-# x,dx = np.linspace(-lim,lim,n_points,retstep=True)
-# y,dy = np.linspace(-lim,lim,n_points,retstep=True)
-# x_grid, y_grid = np.meshgrid(x, y)
-# X = np.array([x_grid.ravel(), y_grid.ravel()]).T
+x,dx = np.linspace(-lim,lim,n_points,retstep=True)
+y,dy = np.linspace(-lim,lim,n_points,retstep=True)
+x_grid, y_grid = np.meshgrid(x, y)
+X = np.array([x_grid.ravel(), y_grid.ravel()]).T
 
-# p = np.zeros((X.shape[0]))
-# for k0 in range(K):
+p = np.zeros((X.shape[0]))
+for k0 in range(K):
     
-#     mid = np.zeros((X.shape[0]))
-#     for k1 in range(K):
-#         temp_mid = Wk1k0[k1,k0]*tfd.Normal(mu[k1,k0],sigma[k1,k0]).prob(X[:,0]).numpy()
+    mid = np.zeros((X.shape[0]))
+    for k1 in range(K):
+        temp_mid = Wk1k0[k1,k0]*tfd.Normal(mu[k1,k0],sigma[k1,k0]).prob(X[:,0]).numpy()
         
-#         inner = np.zeros((X.shape[0]))
-#         for k2 in range(K):
-#             inner += Wk2k1[k2,k1]*tfd.Normal(mu[k2,k1],sigma[k2,k1]).prob(X[:,1]).numpy()
+        inner = np.zeros((X.shape[0]))
+        for k2 in range(K):
+            inner += Wk2k1[k2,k1]*tfd.Normal(mu[k2,k1],sigma[k2,k1]).prob(X[:,1]).numpy()
             
-#         mid += temp_mid*inner
-#     p += Wk0[k0]*mid
+        mid += temp_mid*inner
+    p += Wk0[k0]*mid
     
 
-# # Show density
-# plt.imshow(
-#     p.reshape(n_points,n_points),
-#     extent=(-lim, lim, -lim, lim),
-#     origin='lower'
-# )
-# cbar = plt.colorbar()
-# cbar.ax.set_ylabel('Likelihood')
-# plt.plot()
-# plt.show()
+# Show density
+plt.imshow(
+    p.reshape(n_points,n_points),
+    extent=(-lim, lim, -lim, lim),
+    origin='lower'
+)
+cbar = plt.colorbar()
+cbar.ax.set_ylabel('Likelihood')
+plt.plot()
+plt.show()
 
-# integrand = np.sum(p)*dx*dy
-# print(f'Density integrates to {round(integrand,4)}')
-# print('It should be = 1.0')
+integrand = np.sum(p)*dx*dy
+print(f'Density integrates to {round(integrand,4)}')
+print('It should be = 1.0')
 
 
 #%%

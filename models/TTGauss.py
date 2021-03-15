@@ -77,7 +77,8 @@ class TensorTrainGaussian2D(tf.keras.Model):
         self.Wk1k0 = tf.Variable(
             self.Wk1k0 / tf.reduce_sum(self.Wk1k0, axis=0), 
             name="Wk1k0", 
-            dtype=tf.dtypes.float32)
+            dtype=tf.dtypes.float32
+        )
         self.Wk2k1 = tf.Variable(
             self.Wk2k1 / tf.reduce_sum(self.Wk2k1, axis=0), 
             name="Wk2k1", 

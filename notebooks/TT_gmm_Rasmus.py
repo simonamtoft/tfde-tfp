@@ -153,12 +153,13 @@ class TT_GMM(tf.keras.Model):
     def normalizeWeights(self):
         """ Normalizes the weights to always sum to 1
         """
-        self.Wk0 = self.Wk0/tf.reduce_sum(self.Wk0)
-        self.Wk2k1 = self.Wk2k1/tf.reduce_sum(self.Wk2k1,axis=0)
-        self.Wk1k0 = self.Wk1k0/tf.reduce_sum(self.Wk1k0,axis=0)
+        self.Wk0 = tf.Variable(self.Wk0/tf.reduce_sum(self.Wk0),name="Wk0")
+        self.Wk1k0 = tf.Variable(self.Wk1k0/tf.reduce_sum(self.Wk1k0,axis=0),name="Wk1k0")
+        self.Wk2k1 = tf.Variable(self.Wk2k1/tf.reduce_sum(self.Wk2k1,axis=0),name="Wk2k1")
         
         return None
-  
+ 
+K = 5
 model = TT_GMM(K)
 
 #%% Train model (This doesn't work right now)
@@ -172,7 +173,7 @@ def train_step(data):
     optimizer.apply_gradients(zip(gradients, tvars))
 
 # Fit the model
-EPOCHS = 1000
+EPOCHS = 2000
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 losses = []
 for epoch in range(EPOCHS):
@@ -184,8 +185,7 @@ for epoch in range(EPOCHS):
     losses.append(loss)
     if epoch % 100 == 0:
         print("{}/{} mean neg log likelihood: {}".format(epoch, EPOCHS, loss))
-   
-        
+
 #%% Plot result
 # Set number of points and limits
 n_points = 1000
@@ -212,6 +212,15 @@ cbar = plt.colorbar()
 cbar.ax.set_ylabel('Likelihood')
 plt.plot()
 plt.show()
+
+
+f,ax = plt.subplots(figsize=(5,5))
+ax.plot(data[:, 0], data[:, 1], '.')
+ax.contour(x_grid,y_grid,p.reshape(1000,1000))
+ax.axis('equal')
+ax.set_title(f'Data with {N} points')
+plt.show()
+
 
 
 integrand = np.sum(p)*dx*dy

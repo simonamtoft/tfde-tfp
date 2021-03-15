@@ -24,7 +24,7 @@ def plot_contours(ax, data, model, limit=4, n_points=1000):
     p = np.exp(p_log)
 
     # _, ax = plt.subplots(figsize=(5, 5))
-    ax.plot(data[:, 0], data[:, 1], '.',alpha = 0.3)
+    ax.plot(data[:, 0], data[:, 1], '.',alpha = 0.7)
     ax.contour(x_grid, y_grid, p.reshape(n_points, n_points))
     ax.axis('equal')
     # if title != None:

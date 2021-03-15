@@ -5,10 +5,13 @@ tfd = tfp.distributions
 tfm = tf.math
 
 class TensorTrainGaussian2D(tf.keras.Model):
-    def __init__(self, K, M=None):
+    def __init__(self, K, M=None,seed=None):
         super(TensorTrainGaussian2D, self).__init__()
         self.K = K
         self.M = 2
+        
+        if seed != None:
+            tf.random.set_seed(seed)
 
         # Initialize weights that sum to 1
         Wk0 = np.ones((self.K)) / self.K
@@ -68,22 +71,10 @@ class TensorTrainGaussian2D(tf.keras.Model):
         return log_likelihoods
 
     def normalize_weights(self):
-        """ Ensure that weights always sum to 1 """
-        self.Wk0 = tf.Variable(
-            self.Wk0 / tf.reduce_sum(self.Wk0), 
-            name="Wk0", 
-            dtype=tf.dtypes.float32
-        )
-        self.Wk1k0 = tf.Variable(
-            self.Wk1k0 / tf.reduce_sum(self.Wk1k0, axis=0), 
-            name="Wk1k0", 
-            dtype=tf.dtypes.float32
-        )
-        self.Wk2k1 = tf.Variable(
-            self.Wk2k1 / tf.reduce_sum(self.Wk2k1, axis=0), 
-            name="Wk2k1", 
-            dtype=tf.dtypes.float32
-        )
+        """ Ensure that weights always sum to 1 """        
+        self.Wk0 = tf.Variable(self.Wk0/tf.reduce_sum(self.Wk0),name="Wk0")
+        self.Wk1k0 = tf.Variable(self.Wk1k0/tf.reduce_sum(self.Wk1k0,axis=0),name="Wk1k0")
+        self.Wk2k1 = tf.Variable(self.Wk2k1/tf.reduce_sum(self.Wk2k1,axis=0),name="Wk2k1")
         return None
 
     def train_step(self, data, optimizer):

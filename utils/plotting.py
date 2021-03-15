@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_contours(data, model, limit, n_points, title=None):
+def plot_contours(ax, data, model, limit=4, n_points=1000):
     """visualize the different distributions over the data as a contour plot
 
     Inputs
+        ax              :   Axis on which to plot
         model           :   The trained tf.keras.model
         limit (float)   :   The abs limit of the plot in the two dimensions.
 
@@ -18,21 +19,20 @@ def plot_contours(data, model, limit, n_points, title=None):
     x_grid, y_grid = np.meshgrid(x, y) 
     X = np.array([x_grid.ravel(), y_grid.ravel()]).T
 
+    # Get the likelihood
     p_log = model(X).numpy()
     p = np.exp(p_log)
 
-    _, ax = plt.subplots(figsize=(5, 5))
-    ax.plot(data[:, 0], data[:, 1], '.')
-    ax.contour(x_grid, y_grid, p.reshape(1000, 1000))
+    # _, ax = plt.subplots(figsize=(5, 5))
+    ax.plot(data[:, 0], data[:, 1], '.',alpha = 0.3)
+    ax.contour(x_grid, y_grid, p.reshape(n_points, n_points))
     ax.axis('equal')
-    if title != None:
-        ax.set_title(title)
-    plt.show()
+    # if title != None:
+    #     ax.set_title(title)
+    # plt.show()
     return None
 
-
-# THIS MADE FOR TT, NOT CP NOTEBOOK VERSION
-def plot_density(model, limit, n_points):
+def plot_density(ax, model, limit=4, n_points=1000):
     """visualize the distribution as a density plot
     
     Inputs
@@ -48,6 +48,7 @@ def plot_density(model, limit, n_points):
     y, dy = np.linspace(-limit, limit, n_points, retstep=True)
     x_grid, y_grid = np.meshgrid(x, y)
     X = np.array([x_grid.ravel(), y_grid.ravel()]).T
+    
     # probabilities
     p_log = model(X).numpy()
     p = np.exp(p_log)
@@ -56,14 +57,48 @@ def plot_density(model, limit, n_points):
     integrand = np.sum(p)*dx*dy
             
     # Show density
-    plt.imshow(
+    im = ax.imshow(
         p.reshape(n_points, n_points),
         extent=(-limit, limit, -limit, limit),
         origin='lower'
     )
-    plt.title(f'int(p) = {round(integrand, 4)}')
-    cbar = plt.colorbar()
+    cbar = plt.colorbar(im, ax=ax)
     cbar.ax.set_ylabel('Likelihood')
-    plt.plot()
-    plt.show()
-    return None
+    return integrand
+
+# THIS MADE FOR TT, NOT CP NOTEBOOK VERSION
+# def plot_density(model, limit, n_points):
+#     """visualize the distribution as a density plot
+    
+#     Inputs
+#         model           :   The trained tf.keras.model
+#         limit (float)   :   The abs limit of the plot in the two dimensions.
+
+#     Outputs
+#         A plt.figure that shows the density plot of the cluster distributions.
+#     """
+
+#     # create probability map
+#     x, dx = np.linspace(-limit, limit, n_points, retstep=True)
+#     y, dy = np.linspace(-limit, limit, n_points, retstep=True)
+#     x_grid, y_grid = np.meshgrid(x, y)
+#     X = np.array([x_grid.ravel(), y_grid.ravel()]).T
+#     # probabilities
+#     p_log = model(X).numpy()
+#     p = np.exp(p_log)
+
+#     # sum probs
+#     integrand = np.sum(p)*dx*dy
+            
+#     # Show density
+#     plt.imshow(
+#         p.reshape(n_points, n_points),
+#         extent=(-limit, limit, -limit, limit),
+#         origin='lower'
+#     )
+#     plt.title(f'int(p) = {round(integrand, 4)}')
+#     cbar = plt.colorbar()
+#     cbar.ax.set_ylabel('Likelihood')
+#     plt.plot()
+#     plt.show()
+#     return None

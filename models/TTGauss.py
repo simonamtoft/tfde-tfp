@@ -14,13 +14,13 @@ class TensorTrainGaussian2D(tf.keras.Model):
             tf.random.set_seed(seed)
 
         # Initialize weights that sum to 1
-        Wk0 = np.ones((self.K)) / self.K
+        Wk0 = np.ones((self.K)) #/ self.K
 
         Wk1k0 = np.ones((self.K, self.K))
-        Wk1k0 = Wk1k0 / np.sum(Wk1k0, axis=0)
+        #Wk1k0 = Wk1k0 / np.sum(Wk1k0, axis=0)
 
         Wk2k1 = np.ones((self.K, self.K))
-        Wk2k1 = Wk2k1 / np.sum(Wk2k1, axis=0)
+        #Wk2k1 = Wk2k1 / np.sum(Wk2k1, axis=0)
         
         # Define weights as tf variables
         self.Wk0 = tf.Variable(Wk0, name="Wk0", dtype=tf.dtypes.float32)
@@ -55,17 +55,19 @@ class TensorTrainGaussian2D(tf.keras.Model):
 
     def call(self, X):
         likelihoods = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
-        
+        Wk0 = tf.nn.softmax(self.Wk0);
+        Wk1k0 = tf.nn.softmax(self.Wk1k0, axis=0)
+        Wk2k1 = tf.nn.softmax(self.Wk2k1, axis=0)
         for k0 in range(self.K):
             mid = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
             for k1 in range(self.K):  
-                temp_mid = self.Wk1k0[k1, k0] * self.distributions[k1][k0].prob(X[:, 0])
+                temp_mid = Wk1k0[k1, k0] * self.distributions[k1][k0].prob(X[:, 0])
                 inner = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
                 for k2 in range(self.K):
-                    inner += self.Wk2k1[k2, k1] * self.distributions[k2][k1].prob(X[:, 1])
+                    inner += Wk2k1[k2, k1] * self.distributions[k2][k1].prob(X[:, 1])
                 
                 mid += temp_mid*inner
-            likelihoods += self.Wk0[k0] * mid
+            likelihoods += Wk0[k0] * mid
         
         log_likelihoods = tfm.log(likelihoods)
         return log_likelihoods

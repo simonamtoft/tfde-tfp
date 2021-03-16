@@ -29,10 +29,10 @@ plt.show()
 
 
 #%% Define model and training parameters
-K = 2 # Number of components
+K = 4 # Number of components
 model = m.TensorTrainGaussian2D(K)
 
-EPOCHS = 100
+EPOCHS = 6000
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -61,14 +61,14 @@ f,ax = plt.subplots(figsize=(5,5))
 utl.plot_contours(ax, data, model)
 ax.set_title(name+' with K = '+str(K))
 plt.show()
-# f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_contour.png',dpi=300)
+f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_contour.png',dpi=300)
 
 
 f,ax = plt.subplots(figsize=(5,5))
 utl.plot_density(ax, model)
 ax.set_title('Density of '+name+' with K = '+str(K))
 plt.show()
-# f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_density.png',dpi=300)
+f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_density.png',dpi=300)
 
 integrand = utl.unitTest(model,limits=[-6,6])
 print(f'Density integrates to {round(integrand,4)}')

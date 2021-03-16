@@ -1,5 +1,7 @@
 import tensorflow as tf
 import tensorflow_probability as tfp
+from sklearn.cluster import KMeans
+import numpy as np
 tfd = tfp.distributions
 
 
@@ -13,19 +15,37 @@ class CPGaussian(tf.keras.Model):
     M : int > 0
     Amount of dimensions pr. component
     """
-    def __init__(self, K, M):
+    def __init__(self, K, M, data = None, seed = None):
         super(CPGaussian, self).__init__()
         self.K = K
         self.M = M
+        
+        if seed != None:
+            tf.random.set_seed(seed)
+        
         self.w_logits = tf.Variable([1.]*K, name="logits")
-        self.locs = [
+        
+        if np.all(data != None):
+            # Use Kmeans to get initial guess of mu
+            kmeans = KMeans(n_clusters=K).fit(data)
+            mu_kmeans = kmeans.cluster_centers_
+            self.locs = [
             [
                 tf.Variable(
-                    tf.random.uniform([],-4, 4), 
+                    mu_kmeans[i,j], 
                     name="mu_{},{}".format(i,j)
                 ) for j in range(self.M)
-            ] for i in range(self.K)
-        ]
+            ] for i in range(self.K)]
+        else:
+            self.locs = [
+                [
+                    tf.Variable(
+                        tf.random.uniform([],-4, 4), 
+                        name="mu_{},{}".format(i,j)
+                    ) for j in range(self.M)
+                ] for i in range(self.K)
+            ]
+            
         self.scales = [
             [
                 tf.Variable(

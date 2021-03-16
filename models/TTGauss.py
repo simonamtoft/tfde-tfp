@@ -88,5 +88,5 @@ class TensorTrainGaussian2D(tf.keras.Model):
         tvars = self.trainable_variables
         gradients = tape.gradient(loss_value, tvars)
         optimizer.apply_gradients(zip(gradients, tvars))
-        self.normalize_weights()
+        #self.normalize_weights()
         return loss_value

@@ -4,6 +4,7 @@ import tensorflow_probability as tfp
 tfd = tfp.distributions
 tfm = tf.math
 
+
 class TensorTrainGaussian2D(tf.keras.Model):
     def __init__(self, K, M=None,seed=None):
         super(TensorTrainGaussian2D, self).__init__()
@@ -55,7 +56,7 @@ class TensorTrainGaussian2D(tf.keras.Model):
 
     def call(self, X):
         likelihoods = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
-        Wk0 = tf.nn.softmax(self.Wk0);
+        Wk0 = tf.nn.softmax(self.Wk0)
         Wk1k0 = tf.nn.softmax(self.Wk1k0, axis=0)
         Wk2k1 = tf.nn.softmax(self.Wk2k1, axis=0)
         for k0 in range(self.K):

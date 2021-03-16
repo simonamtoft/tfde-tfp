@@ -32,6 +32,7 @@ def plot_contours(ax, data, model, limit=4, n_points=1000):
     # plt.show()
     return None
 
+
 def plot_density(ax, model, limit=4, n_points=1000):
     """visualize the distribution as a density plot
     

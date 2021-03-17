@@ -15,7 +15,7 @@ from tqdm import tqdm
 #%% Set data parameters
 N = 10000
 data_names = d.fjjordDataNames()
-name = data_names[7]
+name = data_names[0]
 
 data = d.get_ffjordData(name,batch_size=N)
 
@@ -31,26 +31,21 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 8 # Number of components
+K = 2 # Number of components
 model = m.TensorTrainGaussian2D(K)
 
-EPOCHS = 20
+EPOCHS = 2
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
 # Fit the model
 losses = []
 start_time = time.time()
-for epoch in tqdm(range(EPOCHS),desc='Training TT'):
-    # loss = model.train_step(data,optimizer) 
-    # losses.append(loss.numpy())
-    
+for epoch in tqdm(range(EPOCHS),desc='Training TT'):    
     loss = 0
     for i,x in enumerate(dataset):
         loss += model.train_step(x,optimizer) 
     losses.append(loss.numpy()/len(dataset))
-    # if epoch % 100 == 0:
-    #     print("{}/{} mean neg log likelihood: {}".format(epoch, EPOCHS, loss))
         
 end_time = time.time()
 print(f'Training time elapsed: {int(end_time-start_time)} seconds')

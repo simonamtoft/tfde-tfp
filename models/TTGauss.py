@@ -70,7 +70,8 @@ class TensorTrainGaussian2D(tf.keras.Model):
                 mid += temp_mid*inner
             likelihoods += Wk0[k0] * mid
         
-        log_likelihoods = tfm.log(likelihoods)
+        # add small number to avoid nan
+        log_likelihoods = tfm.log(likelihoods+np.finfo(np.float64).eps)
         return log_likelihoods
 
     def normalize_weights(self):

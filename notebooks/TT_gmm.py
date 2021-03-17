@@ -13,7 +13,7 @@ import models as m
 from tqdm import tqdm
 
 #%% Set data parameters
-N = 2000
+N = 10000
 data_names = d.fjjordDataNames()
 name = data_names[7]
 
@@ -26,13 +26,15 @@ ax.axis('equal')
 ax.set_title(name + f' with {N} points')
 plt.show()
 
-
+# Split into batches
+batch_size = 100
+dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 2 # Number of components
+K = 5 # Number of components
 model = m.TensorTrainGaussian2D(K)
 
-EPOCHS = 10
+EPOCHS = 30
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -40,14 +42,19 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 losses = []
 start_time = time.time()
 for epoch in tqdm(range(EPOCHS),desc='Training TT'):
-    loss = model.train_step(data,optimizer)
-    losses.append(loss.numpy())
+    # loss = model.train_step(data,optimizer) 
+    # losses.append(loss.numpy())
+    
+    loss = 0
+    for i,x in enumerate(dataset):
+        loss += model.train_step(x,optimizer) 
+    losses.append(loss.numpy()/len(dataset))
     # if epoch % 100 == 0:
     #     print("{}/{} mean neg log likelihood: {}".format(epoch, EPOCHS, loss))
         
 end_time = time.time()
 print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-print(f'Final loss: {loss.numpy()}')
+print(f'Final loss: {losses[-1]}')
 
 f,ax = plt.subplots()
 ax.plot(range(len(losses)),np.array(losses))
@@ -58,7 +65,7 @@ plt.show()
 #%% Plot result
 
 f,ax = plt.subplots(figsize=(5,5))
-utl.plot_contours(ax, data, model)
+utl.plot_contours(ax, data, model,alpha=0.1)
 ax.set_title(name+' with K = '+str(K))
 plt.show()
 # f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_contour.png',dpi=300)

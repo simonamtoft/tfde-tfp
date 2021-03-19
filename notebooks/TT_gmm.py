@@ -32,10 +32,25 @@ dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
 K = 2 # Number of components
-model = m.TensorTrainGaussian2D(K)
+M = 2 # Dimension of data
+# model = m.TensorTrainGaussian2D(K,seed = 2)
+model = m.TensorTrainGaussian(K, M,seed = 2)
 
 EPOCHS = 2
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
+
+
+with tf.GradientTape() as tape:
+    log_likelihoods = model(data)
+    loss_value = -tf.reduce_mean(log_likelihoods)
+
+    # Compute gradients
+    tvars = model.trainable_variables
+    gradients = tape.gradient(loss_value, tvars)
+# optimizer.apply_gradients(zip(gradients, tvars))
+
+
 
 #%% Train model 
 # Fit the model

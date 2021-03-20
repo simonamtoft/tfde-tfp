@@ -6,7 +6,7 @@ tfm = tf.math
 
 
 class TensorTrainGaussian2D(tf.keras.Model):
-    def __init__(self, K, M=None, seed=None):
+    def __init__(self, K, seed=None):
         super(TensorTrainGaussian2D, self).__init__()
         self.K = K
         self.M = 2
@@ -53,31 +53,33 @@ class TensorTrainGaussian2D(tf.keras.Model):
         return None
 
     def call(self, X):
-        likelihoods = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
+        # likelihoods = tf.zeros((X.shape[0]), dtype=tf.dtypes.float32)
         Wk0 = tf.nn.softmax(self.Wk0)
         Wk1k0 = tf.nn.softmax(self.Wk1k0, axis=0)
         Wk2k1 = tf.nn.softmax(self.Wk2k1, axis=0)
 
         d1 = []
         d2 = []
-        [d1.append(X[:, 0]) for s in range(self.K**2)]
-        [d2.append(X[:, 1]) for s in range(self.K**2)]
+        # [d1.append(X[:, 0]) for s in range(self.K**2)]
+        # [d2.append(X[:, 1]) for s in range(self.K**2)]
+        d1 = X[:, 0]
+        d2 = X[:, 1]
 
         A = Wk1k0
         B = np.reshape(self.joint.log_prob_parts(d1), (self.K, self.K, -1))
         C = Wk2k1
         D = np.reshape(self.joint.log_prob_parts(d2), (self.K, self.K, -1))
         
-        # add small number to avoid nan
-        log_likelihoods = tfm.log(likelihoods+np.finfo(np.float64).eps)
-        return log_likelihoods
+        res1 = tf.multiply(A[:, :], B)
+        res2 = tf.multiply(C[:, :], D)
+        res = tf.tensordot(res1, tf.transpose(res2), axes=2)
+        z = Wk0
 
-    def normalize_weights(self):
-        """ Ensure that weights always sum to 1 """        
-        self.Wk0 = tf.Variable(self.Wk0/tf.reduce_sum(self.Wk0),name="Wk0")
-        self.Wk1k0 = tf.Variable(self.Wk1k0/tf.reduce_sum(self.Wk1k0,axis=0),name="Wk1k0")
-        self.Wk2k1 = tf.Variable(self.Wk2k1/tf.reduce_sum(self.Wk2k1,axis=0),name="Wk2k1")
-        return None
+        likelihoods = tf.reduce_sum(tf.tensordot(z, res, axes=1))
+        return tfm.log(likelihoods + np.finfo(np.float32).eps)
+        # add small number to avoid nan
+        # log_likelihoods = tfm.log(likelihoods+np.finfo(np.float64).eps)
+        # return log_likelihoods
 
     def train_step(self, data, optimizer):
         with tf.GradientTape() as tape:
@@ -106,6 +108,7 @@ class TensorTrainGaussian2D(tf.keras.Model):
         params['mu'] = mu
         params['sigma'] = sigma
         return params
+
 #%%
 class TensorTrainGaussian(tf.keras.Model):
     def __init__(self, K, M, seed=None):
@@ -167,10 +170,10 @@ class TensorTrainGaussian(tf.keras.Model):
             
             # Get weights and probabilities for dimension
             A = W[i].numpy()
-            B = np.reshape(self.joint.prob_parts(d),(self.K,self.K,-1))
+            B = np.reshape(self.joint.prob_parts(d),(self.K, self.K, -1))
             
             # Perform element-wise multiplication
-            res = np.multiply(A[:,:,np.newaxis],B)
+            res = np.multiply(A[:,:, np.newaxis], B)
             
             # Save product
             if i == 0:

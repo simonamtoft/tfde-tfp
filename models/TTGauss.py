@@ -44,11 +44,11 @@ class TensorTrainGaussian2D(tf.keras.Model):
             ] for i in range(self.K)
         ]
         
-        dist = []
-        for i in range(self.K):
-            for j in range(self.K):
-                dist.append(tfd.Normal(self.mu[i][j], self.sigma[i][j]))
-        self.joint = tfd.JointDistributionSequential(dist)
+        # dist = []
+        # for i in range(self.K):
+        #     for j in range(self.K):
+        #         dist.append(tfd.Normal(self.mu[i][j], self.sigma[i][j]))
+        # self.joint = tfd.JointDistributionSequential(dist)
 
         return None
 
@@ -57,6 +57,7 @@ class TensorTrainGaussian2D(tf.keras.Model):
         Wk0 = tf.nn.softmax(self.Wk0)
         Wk1k0 = tf.nn.softmax(self.Wk1k0, axis=0)
         Wk2k1 = tf.nn.softmax(self.Wk2k1, axis=0)
+
 
         d1 = []
         d2 = []
@@ -72,10 +73,10 @@ class TensorTrainGaussian2D(tf.keras.Model):
         
         res1 = tf.multiply(A[:, :], B)
         res2 = tf.multiply(C[:, :], D)
-        res = tf.tensordot(res1, tf.transpose(res2), axes=2)
+        res = res1 @ tf.transpose(res2)
         z = Wk0
 
-        likelihoods = tf.reduce_sum(tf.tensordot(z, res, axes=1))
+        likelihoods = tf.reduce_sum(z @ res)
         return tfm.log(likelihoods + np.finfo(np.float32).eps)
         # add small number to avoid nan
         # log_likelihoods = tfm.log(likelihoods+np.finfo(np.float64).eps)

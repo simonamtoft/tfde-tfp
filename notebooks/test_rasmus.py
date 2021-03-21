@@ -70,12 +70,28 @@ print(np.log(val))
 print(model(X).numpy())
 print(model2(X).numpy())
 
-#%% M-Dimensional test
+#%% Test gradients
+# test_model = model2
+
+# with tf.GradientTape() as tape:
+#     log_likelihoods = test_model(data)
+#     loss_value = -tf.reduce_mean(log_likelihoods)
+#     tvars = test_model.trainable_variables
+#     gradients = tape.gradient(loss_value, tvars)
+    
+# print(gradients)
+
+
+
+#%% M-Dimensional test with numpy vs tensorflow
 M = 5
 K = 4
 
 Wk0 = np.random.rand(K)
 W = np.random.rand(M,K,K)
+
+Wk0_tf = tf.convert_to_tensor(Wk0,dtype=tf.dtypes.float32)
+W_tf = tf.convert_to_tensor(W,dtype=tf.dtypes.float32)
 
 X = np.random.rand(10,M)
 
@@ -87,6 +103,7 @@ joint = tfd.JointDistributionSequential(dist)
 
 # Calculate probability
 z = Wk0
+z_tf = Wk0_tf
 
 for i in range(M):
     d = []
@@ -94,11 +111,44 @@ for i in range(M):
     
     A = W[i]
     B = np.reshape(joint.prob_parts(d),(K,K,-1))
+    
+    A_tf = W_tf[i]
+    B_tf = tf.reshape(joint.prob_parts(d),(K,K,-1))
+    
+    
     res = np.multiply(A[:,:,np.newaxis],B)
     if i == 0:
         a = res.T
     else:
         a = a @ res.T
+    
+    res_tf = tf.multiply(A_tf[:,:,np.newaxis],B_tf)
+    if i == 0:
+        a_tf = tf.transpose(res_tf)
+    else:
+        a_tf = a_tf @ tf.transpose(res_tf)
+
+
+k_tf = tf.linalg.matvec(a,z)
+val_tf = tfm.reduce_sum(k_tf,axis=1)
+print(tfm.log(val_tf))
 
 val = np.sum(z @ a, axis = 1)
 print(np.log(val))
+
+#%% M-Dimensional test with model
+
+K = 8 # Number of components
+M = 5
+
+model = m.TensorTrainGaussian(K,M,seed = 2)
+
+X = np.random.rand(100,M)
+
+EPOCHS = 10
+optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+losses = np.zeros((EPOCHS))
+for i,epoch in enumerate(range(EPOCHS)):    
+    loss = model.train_step(X,optimizer) 
+    losses[i] = loss.numpy()
+plt.plot(losses)

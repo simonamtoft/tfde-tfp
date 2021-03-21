@@ -14,10 +14,10 @@ from tqdm import tqdm
 
 #%% Load data
 N = 10000
-data_names = d.fjjordDataNames()
+data_names = d.get_toy_names()
 name = data_names[7]
 
-data = d.get_ffjordData(name,batch_size=N)
+data = d.get_ffjord_data(name,batch_size=N)
 
 # Inspect the data
 f,ax = plt.subplots(figsize=(5,5))

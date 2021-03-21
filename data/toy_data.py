@@ -7,7 +7,14 @@ import sklearn
 import sklearn.datasets
 from sklearn.utils import shuffle as util_shuffle
 
-def get_ffjordData(name='8gaussians',batch_size=200,rng=None):
+def get_toy_names():
+    return [
+        '8gaussians', 'swissroll', 'circles', 'rings', 'moons',
+        'pinwheel', '2spirals', 'checkerboard', 'line', 'cos'
+    ]
+
+
+def get_ffjord_data(name='8gaussians', batch_size=200, rng=None):
     """ Wrapper function to get fjjord data
     """
     
@@ -32,16 +39,12 @@ def get_ffjordData(name='8gaussians',batch_size=200,rng=None):
     elif name == 'cos':
         data = gen_cos(rng, batch_size)
     else:
-        raise Exception('Fjjord data name is incorrect')
+        raise Exception('FFJORD data name is incorrect')
         
     # Convert to float32 data type
     data = data.astype(np.float32)
     return data
-   
-def fjjordDataNames():
-    names = ['8gaussians','swissroll','circles','rings','moons',
-             'pinwheel','2spirals','checkerboard','line','cos']
-    return names
+
 
 def gen_swissroll(rng=None, batch_size=200):
     if rng is None:

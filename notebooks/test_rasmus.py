@@ -14,14 +14,14 @@ from tqdm import tqdm
 
 #%% Data
 N = 5000
-data_names = d.fjjordDataNames()
+data_names = d.get_toy_names()
 name = data_names[0]
-data = d.get_ffjordData(name,batch_size=N)
+data = d.get_ffjord_data(name,batch_size=N)
 
 #%% Define model
 K = 4 # Number of components
 M = 2
-model = m.TensorTrainGaussian2D(K,seed = 2)
+model = m.TensorTrainGaussian2D(K, seed = 2)
 
 model2 = m.TensorTrainGaussian(K,M,seed = 2)
 #%% 2D test

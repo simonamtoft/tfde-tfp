@@ -2,3 +2,4 @@
 utils/__pycache__/plotting.cpython-37.pyc
 *.pyc
 accesstoken
+data/real_data/household_power_consumption.txt

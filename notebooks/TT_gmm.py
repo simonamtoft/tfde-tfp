@@ -12,7 +12,7 @@ import data as d
 import models as m
 from tqdm import tqdm
 
-#%% Set data parameters
+#%% Load data
 N = 10000
 data_names = d.fjjordDataNames()
 name = data_names[7]

@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_contours(ax, data, model, limit=4, n_points=1000,alpha=1.0):
+def plot_contours(ax, data, model, limit=4, n_points=1000, alpha=1.0):
     """visualize the different distributions over the data as a contour plot
 
     Inputs
@@ -27,9 +27,6 @@ def plot_contours(ax, data, model, limit=4, n_points=1000,alpha=1.0):
     ax.plot(data[:, 0], data[:, 1], '.',alpha = alpha)
     ax.contour(x_grid, y_grid, p.reshape(n_points, n_points))
     ax.axis('equal')
-    # if title != None:
-    #     ax.set_title(title)
-    # plt.show()
     return None
 
 
@@ -61,45 +58,9 @@ def plot_density(ax, model, limit=4, n_points=1000):
     im = ax.imshow(
         p.reshape(n_points, n_points),
         extent=(-limit, limit, -limit, limit),
-        origin='lower'
+        origin='lower',
+        cmap='gray'
     )
     cbar = plt.colorbar(im, ax=ax)
     cbar.ax.set_ylabel('Likelihood')
     return integrand
-
-# THIS MADE FOR TT, NOT CP NOTEBOOK VERSION
-# def plot_density(model, limit, n_points):
-#     """visualize the distribution as a density plot
-    
-#     Inputs
-#         model           :   The trained tf.keras.model
-#         limit (float)   :   The abs limit of the plot in the two dimensions.
-
-#     Outputs
-#         A plt.figure that shows the density plot of the cluster distributions.
-#     """
-
-#     # create probability map
-#     x, dx = np.linspace(-limit, limit, n_points, retstep=True)
-#     y, dy = np.linspace(-limit, limit, n_points, retstep=True)
-#     x_grid, y_grid = np.meshgrid(x, y)
-#     X = np.array([x_grid.ravel(), y_grid.ravel()]).T
-#     # probabilities
-#     p_log = model(X).numpy()
-#     p = np.exp(p_log)
-
-#     # sum probs
-#     integrand = np.sum(p)*dx*dy
-            
-#     # Show density
-#     plt.imshow(
-#         p.reshape(n_points, n_points),
-#         extent=(-limit, limit, -limit, limit),
-#         origin='lower'
-#     )
-#     plt.title(f'int(p) = {round(integrand, 4)}')
-#     cbar = plt.colorbar()
-#     cbar.ax.set_ylabel('Likelihood')
-#     plt.plot()
-#     plt.show()
-#     return None

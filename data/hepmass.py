@@ -57,7 +57,6 @@ def load_data_no_discrete(path):
 
 
 def load_data_no_discrete_normalised(path):
-
     data_train, data_test = load_data_no_discrete(path)
     mu = data_train.mean()
     s = data_train.std()

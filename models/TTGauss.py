@@ -41,7 +41,7 @@ class TensorTrainGaussian(TensorTrainModel):
         """ M-dimensional Tensor Train with Gaussian Mixture Models 
         
         Inputs
-            K       (int)   :   The number of gaussian mixtures the model consits of
+            K       (int)   :   The number of mixtures the model consits of
             M       (int)   :   The number of dimensions of the data
             seed    (int)   :   Set to other than none in order to reproduce results
         """

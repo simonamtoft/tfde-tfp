@@ -8,6 +8,8 @@ def get_real_data(name='POWER',path_to_data='real_data/'):
     
     if name == 'POWER':
         data = load_POWER_data(path_to_data)
+    elif name == 'MINIBOONE':
+        data = load_MINIBOONE_data(path_to_data)
     else:
         raise Exception('Wrong data name')
         
@@ -33,6 +35,23 @@ def load_POWER_data(path):
     # Remove nan-observations
     nan_index = np.any(np.isnan(data),axis=1)
     data = data[~nan_index]
+    
+    # Normalize data
+    data = normalize(data)
+    return data
+
+def load_MINIBOONE_data(path):
+    """ Loads the MINIBOONE dataset from:
+        https://archive.ics.uci.edu/ml/datasets/MiniBooNE+particle+identification
+    """
+    # Load data
+    df = pd.read_csv(path +'MiniBooNE_PID.txt',header=None,skiprows=1,skipinitialspace=True,sep=' ')
+
+    # Convert to numpy
+    data = df.to_numpy().astype('float32')
+    
+    signal_events = 36499
+    background_events = 93565
     
     # Normalize data
     data = normalize(data)

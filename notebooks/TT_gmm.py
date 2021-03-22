@@ -15,7 +15,7 @@ from tqdm import tqdm
 #%% Load data
 N = 10000
 data_names = d.get_toy_names()
-name = data_names[7]
+name = data_names[3]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
@@ -31,11 +31,11 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 8 # Number of components
+K = 12 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 10
+EPOCHS = 300
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -60,16 +60,16 @@ plt.show()
 
 #%% Plot result
 
-f,ax = plt.subplots(figsize=(5,5))
+f,ax = plt.subplots(figsize=(8,8))
 utl.plot_contours(ax, data, model,alpha=0.1)
-ax.set_title(name+' with K = '+str(K))
+ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_contour.png',dpi=300)
 
 
-f,ax = plt.subplots(figsize=(5,5))
-utl.plot_density(ax, model)
-ax.set_title('Density of '+name+' with K = '+str(K))
+f,ax = plt.subplots(figsize=(8,5))
+utl.plot_density(ax, model,cmap='hot')
+ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_density.png',dpi=300)
 

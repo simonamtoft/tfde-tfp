@@ -13,8 +13,8 @@ tfd = tfp.distributions
 tfm = tf.math
 
 #%% Load data
-data = d.get_real_data('MINIBOONE',path_to_data='../data/real_data/')
-
+data = d.get_real_data('HEPMASS',path_to_data='../data/real_data/')
+N = data.shape[0]
 
 f,ax = plt.subplots()
 im = ax.imshow(data,extent=[0,100,0,1],aspect='auto')
@@ -31,7 +31,7 @@ K = 10 # Number of components
 M = data.shape[1] # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 10
+EPOCHS = 3
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 

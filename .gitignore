@@ -5,3 +5,7 @@ accesstoken
 data/real_data/household_power_consumption.txt
 data/real_data/1000_train.csv.gz
 data/real_data/MiniBooNE_PID.txt
+data/real_data/1000_test.csv.gz
+data/real_data/miniboone_data.npy
+data/real_data/hepmass_test.npy
+data/real_data/hepmass_train.npy

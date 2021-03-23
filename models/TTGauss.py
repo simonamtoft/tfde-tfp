@@ -46,8 +46,10 @@ class TensorTrainGaussian(TensorTrainModel):
             seed    (int)   :   Set to other than none in order to reproduce results
         """
         super(TensorTrainGaussian, self).__init__(K, M, seed)
-        mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
-        pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
+        # mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
+        # pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
+        mu = np.random.uniform(-4, 4, (self.K, self.K))
+        pre_sigma = np.random.uniform(0, 5, (self.K, self.K))
         self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
         self.pre_sigma = tf.Variable(pre_sigma, name="sigma", dtype=tf.dtypes.float32)
 
@@ -72,12 +74,17 @@ class TensorTrainGaussian(TensorTrainModel):
         W = [tf.nn.softmax(self.W_logits[i], axis=0) for i in range(self.M)]
         
         # Go from raw values -> strictly positive values (ReLU approx.)
-        sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
+        # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
+        sigma = tfm.softplus(self.pre_sigma)
   
         product = tf.eye(wk0.shape[1]) # start out with identity matrix
         for i in range(self.M):
           result = tfm.exp(
-              tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
+              # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
+              #     # Make data broadcastable into (n, km, kn)
+              #     X[:, tf.newaxis, tf.newaxis, i]
+              # )
+              tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
                   # Make data broadcastable into (n, km, kn)
                   X[:, tf.newaxis, tf.newaxis, i]
               )

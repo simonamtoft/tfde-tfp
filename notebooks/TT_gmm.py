@@ -15,7 +15,7 @@ from tqdm import tqdm
 #%% Load data
 N = 10000
 data_names = d.get_toy_names()
-name = data_names[3]
+name = data_names[7]
 
 data = d.get_ffjord_data(name,batch_size=N)
 

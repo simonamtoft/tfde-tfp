@@ -15,7 +15,7 @@ from tqdm import tqdm
 #%% Load data
 N = 10000
 data_names = d.get_toy_names()
-name = data_names[7]
+name = data_names[0]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
@@ -31,11 +31,11 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 12 # Number of components
+K = 8 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 300
+EPOCHS = 1000
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 

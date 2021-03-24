@@ -13,11 +13,11 @@ import models as m
 from tqdm import tqdm
 
 #%% Set data parameters
-N = 2000
-data_names = d.fjjordDataNames()
-name = data_names[0]
+N = 10000
+data_names = d.get_toy_names()
+name = data_names[7]
 
-data = d.get_ffjordData(name,batch_size=N)
+data = d.get_ffjord_data(name,batch_size=N)
 
 # Inspect the data
 f,ax = plt.subplots(figsize=(5,5))
@@ -37,7 +37,7 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 # Fit the model
 losses = []
 start_time = time.time()
-for epoch in tqdm(range(EPOCHS),desc='Training TT'):
+for epoch in tqdm(range(EPOCHS),desc='Training CP'):
     loss = model.train_step(data,optimizer)
     losses.append(loss.numpy())
         

@@ -37,20 +37,22 @@ class TensorTrainModel(tf.keras.Model):
         gradients = tape.gradient(loss_value, tvars)
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
-    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)):
+    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3),
+            mute = False):
         """ Fits model to a dataset """
     
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS),desc='Training TT'):    
+        for epoch in tqdm(range(EPOCHS),desc='Training TT',disable=mute):    
             loss = 0
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 
             losses.append(loss.numpy()/len(dataset))
                 
         end_time = time.time()
-        print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-        print(f'Final loss: {losses[-1]}')
+        if not mute:
+            print(f'Training time elapsed: {int(end_time-start_time)} seconds')
+            print(f'Final loss: {losses[-1]}')
     
         return losses
         

@@ -94,7 +94,8 @@ class CPGaussian(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
     
-    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3),mu_init='kmeans'):
+    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3),
+            mu_init='kmeans',mute = False):
         """ Fits model to a dataset """
         # Initialize mu
         # This is really ugly right now and could be fixed
@@ -104,15 +105,16 @@ class CPGaussian(tf.keras.Model):
     
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS),desc='Training CP'):    
+        for epoch in tqdm(range(EPOCHS),desc='Training CP',disable=mute):    
             loss = 0
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 
             losses.append(loss.numpy()/len(dataset))
                 
         end_time = time.time()
-        print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-        print(f'Final loss: {losses[-1]}')
+        if not mute:
+            print(f'Training time elapsed: {int(end_time-start_time)} seconds')
+            print(f'Final loss: {losses[-1]}')
     
         return losses
     def sample(self, N):

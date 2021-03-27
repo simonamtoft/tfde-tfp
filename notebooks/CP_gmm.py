@@ -5,12 +5,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import utils as utl
-import time
-tfd = tfp.distributions
-tfm = tf.math
 import data as d
 import models as m
-from tqdm import tqdm
+tfd = tfp.distributions
+tfm = tf.math
 
 #%% Set data parameters
 N = 10000

@@ -15,7 +15,7 @@ from tqdm import tqdm
 #%% Load data
 N = 10000
 data_names = d.get_toy_names()
-name = data_names[0]
+name = data_names[7]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
@@ -31,26 +31,15 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 8 # Number of components
+K = 10 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 1000
+EPOCHS = 200
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
-# Fit the model
-losses = []
-start_time = time.time()
-for epoch in tqdm(range(EPOCHS),desc='Training TT'):    
-    loss = 0
-    for i,x in enumerate(dataset):
-        loss += model.train_step(x,optimizer) 
-    losses.append(loss.numpy()/len(dataset))
-        
-end_time = time.time()
-print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-print(f'Final loss: {losses[-1]}')
+losses = model.fit(dataset,EPOCHS,optimizer)
 
 f,ax = plt.subplots()
 ax.plot(range(len(losses)),np.array(losses))

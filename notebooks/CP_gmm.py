@@ -26,24 +26,21 @@ ax.axis('equal')
 ax.set_title(name + f' with {N} points')
 plt.show()
 
+# Split into batches
+batch_size = 100
+dataset = d.to_tf_dataset(data, batch_size=batch_size)
+
 #%% Define model and training parameters
 K = 8 # Number of components
-model = m.CPGaussian(K,data.shape[1],data)
+M = data.shape[1] # Number of dimensions in data
+model = m.CPGaussian(K,M)
 
-EPOCHS = 1000
+EPOCHS = 30
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
-# Fit the model
-losses = []
-start_time = time.time()
-for epoch in tqdm(range(EPOCHS),desc='Training CP'):
-    loss = model.train_step(data,optimizer)
-    losses.append(loss.numpy())
-        
-end_time = time.time()
-print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-print(f'Final loss: {loss.numpy()}')
+losses = model.fit(dataset,EPOCHS,optimizer,'kmeans')
+
 
 f,ax = plt.subplots()
 ax.plot(range(len(losses)),np.array(losses))
@@ -53,16 +50,16 @@ plt.show()
 
 #%% Plot result
 
-f,ax = plt.subplots(figsize=(5,5))
-utl.plot_contours(ax, data, model)
-ax.set_title(name+' with K = '+str(K))
+f,ax = plt.subplots(figsize=(8,8))
+utl.plot_contours(ax, data, model,alpha=0.1)
+ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/CP/'+name+'_K_'+str(K)+'_contour.png',dpi=300)
 
 
-f,ax = plt.subplots(figsize=(5,5))
-utl.plot_density(ax, model)
-ax.set_title('Density of '+name+' with K = '+str(K))
+f,ax = plt.subplots(figsize=(8,5))
+utl.plot_density(ax, model,cmap='hot')
+ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/CP/'+name+'_K_'+str(K)+'_density.png',dpi=300)
 

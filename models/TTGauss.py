@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_probability as tfp
+import time
+from tqdm import tqdm
 tfd = tfp.distributions
 tfm = tf.math
 
@@ -22,6 +24,7 @@ class TensorTrainModel(tf.keras.Model):
         # Define as TensorFlow variables
         self.wk0_logits = tf.Variable(Wk0, name="Wk0_logits", dtype=tf.dtypes.float32)
         self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
+        return None
 
     @tf.function
     def train_step(self, data, optimizer):
@@ -34,6 +37,24 @@ class TensorTrainModel(tf.keras.Model):
         gradients = tape.gradient(loss_value, tvars)
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
+    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)):
+        """ Fits model to a dataset """
+    
+        losses = []
+        start_time = time.time()
+        for epoch in tqdm(range(EPOCHS),desc='Training TT'):    
+            loss = 0
+            for i,x in enumerate(dataset):
+                loss += self.train_step(x,optimizer) 
+            losses.append(loss.numpy()/len(dataset))
+                
+        end_time = time.time()
+        print(f'Training time elapsed: {int(end_time-start_time)} seconds')
+        print(f'Final loss: {losses[-1]}')
+    
+        return losses
+        
+        
 
 
 class TensorTrainGaussian(TensorTrainModel):
@@ -52,6 +73,7 @@ class TensorTrainGaussian(TensorTrainModel):
         pre_sigma = np.random.uniform(0, 5, (self.K, self.K))
         self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
         self.pre_sigma = tf.Variable(pre_sigma, name="sigma", dtype=tf.dtypes.float32)
+        return None
 
     def call(self, X):
         """ Calculates the log-likelihood of datapoint(s) with M-dimensions
@@ -106,4 +128,13 @@ class TensorTrainGaussian(TensorTrainModel):
         # Simply sample from categorical distributions based on wk0 and W logits
         # And then sample from corresponding distributions.
         pass
+    
+    def n_parameters(self):
+        """ Returns the number of parameters in model """
+        n_params = 0
+        n_params += self.K # From W_k0
+        n_params += self.M*self.K*self.K # From W_logits
+        n_params += 2*self.K*self.K # From mu and sigma
+
+        return n_params
 

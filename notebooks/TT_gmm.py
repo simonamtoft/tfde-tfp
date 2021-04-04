@@ -5,12 +5,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import utils as utl
-import time
-tfd = tfp.distributions
-tfm = tf.math
 import data as d
 import models as m
-from tqdm import tqdm
+tfd = tfp.distributions
+tfm = tf.math
 
 #%% Load data
 N = 10000
@@ -35,7 +33,7 @@ K = 10 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 200
+EPOCHS = 400
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 

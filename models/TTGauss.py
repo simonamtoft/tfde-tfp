@@ -47,7 +47,7 @@ class TensorTrainModel(tf.keras.Model):
             optimizer   (tf.keras.optimizers)   :   The optimizer used for training the model.
                                                     Default is the Adam optimizer with lr=1e-3
             mute        (bool)                  :   Whether to time and print after training or not.
-        Returns
+        Return
             losses      (array)                 :   Array of the loss after each epoch
         """
         
@@ -74,7 +74,7 @@ class TensorTrainGaussian(TensorTrainModel):
     def __init__(self, K, M, seed=None):
         """ M-dimensional Tensor Train with Gaussian Mixture Models 
         
-        Inputs
+        Input
             K       (int)   :   The number of mixtures the model consits of
             M       (int)   :   The number of dimensions of the data
             seed    (int)   :   Set to other than none in order to reproduce results

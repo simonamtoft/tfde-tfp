@@ -64,16 +64,17 @@ def load_MINIBOONE_data(path):
         https://archive.ics.uci.edu/ml/datasets/MiniBooNE+particle+identification
     """
     filename = 'MiniBooNE_PID.txt'
+    
     # Check if data file exists
     if not os.path.exists(path + filename):
         raise Exception("Data file for MINIBOONE is not present.\nDownload from https://archive.ics.uci.edu/ml/datasets/MiniBooNE+particle+identification")
     
-    # Remove some features from data (to mimic ffjord paper preprocessing)
-    if not os.path.isfile(path+"miniboone_data.npy"):
+    # Remove some features from data (to mimic FFJORD paper preprocessing)
+    if not os.path.isfile(path + "miniboone_data.npy"):
         preprocess_miniboone(path)
         
     # Load data
-    data = np.load(path+"miniboone_data.npy").astype(np.float32)
+    data = np.load(path + "miniboone_data.npy").astype(np.float32)
     
     # Split into train, validate and test
     N_test = int(0.1 * data.shape[0])
@@ -94,15 +95,17 @@ def load_MINIBOONE_data(path):
 
     return data_train, data_validate, data_test
 
-def load_HEPMASS_data(path = 'real_data/'):
+
+def load_HEPMASS_data(path='real_data/'):
     """ Loads the HEPMASS dataset from:
         http://archive.ics.uci.edu/ml/datasets/HEPMASS
     """
     filename_train = '1000_train.csv.gz'
     filename_test = '1000_test.csv.gz'
+
     # Check if data file exists
     if not os.path.exists(path + filename_train) or not os.path.exists(path + filename_test):
-        raise Exception("Data file for HEPMASS is not present.")
+        raise Exception("Data file for HEPMASS is not present.\nDownload from http://archive.ics.uci.edu/ml/datasets/HEPMASS")
 
     # Remove some features from data (to mimic ffjord paper preprocessing)
     if not os.path.isfile(path+"hepmass_train.npy"):
@@ -120,7 +123,8 @@ def load_HEPMASS_data(path = 'real_data/'):
     
     return data_train, data_validate, data_test
 
-def preprocess_miniboone(path = 'real_data/'):
+
+def preprocess_miniboone(path='real_data/'):
     filename = 'MiniBooNE_PID.txt'
     # NOTE: To remember how the pre-processing was done.
     data = pd.read_csv(path + filename, names=[str(x) for x in range(50)], delim_whitespace=True)
@@ -131,7 +135,6 @@ def preprocess_miniboone(path = 'real_data/'):
     # Remove some random outliers
     indices = (data[:, 0] < -100)
     data = data[~indices]
-    
     
     # Remove nan-observations
     nan_index = np.any(np.isnan(data), axis=1)
@@ -152,6 +155,7 @@ def preprocess_miniboone(path = 'real_data/'):
     # Save result
     np.save(path + "miniboone_data.npy", data)
     return None
+
 
 def preprocess_hepmass(path = 'real_data/'):
     filename_train = "1000_train.csv.gz"
@@ -198,10 +202,11 @@ def preprocess_hepmass(path = 'real_data/'):
     np.save(path + "hepmass_test.npy", data_test)
     return None
 
+
 def normalize(X):
     """ Normalize to zero mean and unit variance """
-    mu = np.mean(X,axis=0)
-    std = np.std(X,axis=0)
+    mu = np.mean(X, axis=0)
+    std = np.std(X, axis=0)
     
     X_normalized = (X-mu)/std
 

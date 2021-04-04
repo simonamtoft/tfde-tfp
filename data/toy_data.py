@@ -15,8 +15,7 @@ def get_toy_names():
 
 
 def get_ffjord_data(name='8gaussians', batch_size=200, rng=None):
-    """ Wrapper function to get fjjord data
-    """
+    """ Wrapper function to get FFJORD toy data"""
     
     if name == '8gaussians':
         data = gen_8gaussians(rng, batch_size)

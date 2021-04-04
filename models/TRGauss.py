@@ -7,9 +7,9 @@ tfd = tfp.distributions
 tfm = tf.math
 
 
-class TensorTrainModel(tf.keras.Model):
+class TensorRingModel(tf.keras.Model):
     def __init__(self, K, M, seed=None):
-        super(TensorTrainModel, self).__init__()
+        super(TensorRingModel, self).__init__()
         self.K = K
         self.M = M
 
@@ -17,12 +17,10 @@ class TensorTrainModel(tf.keras.Model):
         if seed != None:
             tf.random.set_seed(seed)
 
-        # Initialize model weights
-        Wk0 = np.ones((1, self.K))      
+        # Initialize model weights  
         W_logits = np.ones((self.M, self.K, self.K))
 
         # Define as TensorFlow variables
-        self.wk0_logits = tf.Variable(Wk0, name="Wk0_logits", dtype=tf.dtypes.float32)
         self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
         return None
 
@@ -43,7 +41,7 @@ class TensorTrainModel(tf.keras.Model):
     
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS),desc='Training TT',disable=mute):    
+        for epoch in tqdm(range(EPOCHS),desc='Training TR',disable=mute):    
             loss = 0
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 
@@ -59,7 +57,7 @@ class TensorTrainModel(tf.keras.Model):
         
 
 
-class TensorTrainGaussian(TensorTrainModel):
+class TensorRingGaussian(TensorRingModel):
     def __init__(self, K, M, seed=None):
         """ M-dimensional Tensor Train with Gaussian Mixture Models 
         
@@ -68,7 +66,7 @@ class TensorTrainGaussian(TensorTrainModel):
             M       (int)   :   The number of dimensions of the data
             seed    (int)   :   Set to other than none in order to reproduce results
         """
-        super(TensorTrainGaussian, self).__init__(K, M, seed)
+        super(TensorRingGaussian, self).__init__(K, M, seed)
         # mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
         # pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
         mu = np.random.uniform(-4, 4, (self.K, self.K))
@@ -94,32 +92,25 @@ class TensorTrainGaussian(TensorTrainModel):
         X = tf.cast(tf.reshape(X, (-1, self.M)), tf.float32)
   
         # Go from logits -> weights
-        wk0 = tf.nn.softmax(self.wk0_logits, axis=1) # axis 1 as it is (1, K0)
         W = [tf.nn.softmax(self.W_logits[i], axis=0) for i in range(self.M)]
+        # W = tf.nn.softmax(self.W_logits,axis=2)
+        # W[0] = tf.reshape(tf.nn.softmax(tf.reshape(self.W_logits[0],(-1))),(self.K,self.K))
         
         # Go from raw values -> strictly positive values (ReLU approx.)
-        # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
         sigma = tfm.softplus(self.pre_sigma)
   
-        product = tf.eye(wk0.shape[1]) # start out with identity matrix
-        for i in range(self.M):
+        product = tf.eye(self.K) # start out with identity matrix
+        for i in range(1,self.M):
           result = tfm.exp(
-              # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
-              #     # Make data broadcastable into (n, km, kn)
-              #     X[:, tf.newaxis, tf.newaxis, i]
-              # )
               tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
-                  # Make data broadcastable into (n, km, kn)
-                  X[:, tf.newaxis, tf.newaxis, i]
-              )
-          ) # intermediary calculation in log-domain -> exp after.
-          # Keep batch dimension in place, transpose matrices
+                  X[:, tf.newaxis, tf.newaxis, i])) 
           product = product @ tf.transpose(result, perm=[0, 2, 1])
         
-        # In order: Squeeze (n, 1, k_last) -> (n, k_last).
-        # Reduce sum over k_last into (n, )
-        # Squeeze result to (n, ) if n > 1 or () if n == 1
-        likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
+        result = tfm.exp(tfm.log(W[0]) + tfd.Normal(self.mu, sigma).log_prob(
+                  X[:, tf.newaxis, tf.newaxis, 0]))
+        product = product @ result
+        
+        likelihoods = tf.squeeze(tf.reduce_sum(tf.reduce_sum(product,axis=1),axis=1))
   
         # add small number to avoid nan
         log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
@@ -134,14 +125,8 @@ class TensorTrainGaussian(TensorTrainModel):
     def n_parameters(self):
         """ Returns the number of parameters in model """
         n_params = 0
-        n_params += self.K # From W_k0
         n_params += self.M*self.K*self.K # From W_logits
         n_params += 2*self.K*self.K # From mu and sigma
-        
-        # Check that trainable params = actual number of parameters
-        n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
-        if n_params2 != n_params:
-            raise Exception("Number of parameters doens't fit with trainable parameters")
-        
+
         return n_params
 

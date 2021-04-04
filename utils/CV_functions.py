@@ -20,7 +20,7 @@ def CV_1_fold(data, Ks = np.arange(4,8,2), model_name='TT', CV_splits = 5,
     
     Ks : tuple or scalar. Should be a list of values that are divisible by 2
     model_name : Name of model to test with options
-                    'TT' or 'CP'
+                    'TT' or 'CP' or 'GMM'
     """ 
     if np.isscalar(Ks): # Transform
         Ks = (Ks,)
@@ -46,7 +46,7 @@ def CV_1_fold(data, Ks = np.arange(4,8,2), model_name='TT', CV_splits = 5,
         X_test = (X_test-mu)/std
         
         # Make tensorflow dataset
-        dataset_train = d.to_tf_dataset(data, batch_size=batch_size)
+        dataset_train = d.to_tf_dataset(X_train, batch_size=batch_size)
         
         for j,K in enumerate(Ks):
             # Train model on training data
@@ -54,14 +54,24 @@ def CV_1_fold(data, Ks = np.arange(4,8,2), model_name='TT', CV_splits = 5,
                 model = m.TensorTrainGaussian(K, M)
             elif model_name == 'CP':
                 model = m.CPGaussian(K,M)
+            elif model_name == 'GMM':
+                model = GaussianMixture(n_components=K, covariance_type='full', n_init=5,init_params='kmeans')
             else:
                 raise Exception('Provided model_name not valid')
-            losses = model.fit(dataset_train,epochs,optimizer,mute=True)
+                
+            if model_name == 'GMM': # Sklearn trains differently than us
+                model.fit(X_train)
+                losses = [-model.score(X_train)]
+            else:
+                losses = model.fit(dataset_train,epochs,optimizer,mute=True)
             
             error_train[i,j] = losses[-1]
             
             # Get negative log-likelihood on test data
-            log_likelihoods_test =  model(X_test)
+            if model_name == 'GMM': # Sklearn trains differently than us
+                log_likelihoods_test = model.score_samples(X_test)
+            else:
+                log_likelihoods_test =  model(X_test)
             error_test[i,j] = -tf.reduce_mean(log_likelihoods_test).numpy()
     
         # Get average error across splits

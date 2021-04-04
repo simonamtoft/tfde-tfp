@@ -129,6 +129,11 @@ class CPGaussian(tf.keras.Model):
         n_params += self.K # From W_logits
         n_params += 2*self.K*self.M # From mu and sigma
 
+        # Check that trainable params = actual number of parameters
+        n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
+        if n_params2 != n_params:
+            raise Exception("Number of parameters doens't fit with trainable parameters")
+            
         return n_params
     
 

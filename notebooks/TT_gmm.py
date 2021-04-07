@@ -29,11 +29,11 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 5 # Number of components
+K = 12 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 200
+EPOCHS = 500
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 

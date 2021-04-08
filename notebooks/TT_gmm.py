@@ -11,7 +11,7 @@ tfd = tfp.distributions
 tfm = tf.math
 
 #%% Load data
-N = 10000
+N = 2000
 data_names = d.get_toy_names()
 name = data_names[7]
 
@@ -33,7 +33,7 @@ K = 12 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 500
+EPOCHS = 20
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -63,5 +63,12 @@ plt.show()
 integrand = utl.unitTest(model,limits=[-6,6])
 print(f'Density integrates to {round(integrand,4)}')
 print('It should be = 1.0')
+
+
+
+
+
+
+
 
 

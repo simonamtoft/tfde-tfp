@@ -53,6 +53,9 @@ class TensorTrainModel(tf.keras.Model):
         
         if optimizer == None:
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+          
+        # Initialize parameters
+        self.init_parameters(dataset,N_init = 200)
 
         losses = []
         start_time = time.time()
@@ -141,6 +144,39 @@ class TensorTrainGaussian(TensorTrainModel):
         # Simply sample from categorical distributions based on wk0 and W logits
         # And then sample from corresponding distributions.
         pass
+    
+    def init_parameters(self, dataset,N_init = 100):
+        """ Initializes the parameters in the gaussian models 
+        to the lowest value of N_init random initializations
+        """
+        
+        for i, x in enumerate(dataset):
+            break
+
+        # Find the limits of the parameters
+        means_min = np.min(x)
+        means_max = np.max(x)
+        std_max = np.max(np.std(x,axis=0))
+        
+        # Initialize parameter arrays
+        means = np.random.uniform(means_min, means_max, (N_init, self.K, self.K))
+        pre_sigmas = np.random.uniform(0, std_max, (N_init, self.K, self.K))
+        
+        # Initialize score array
+        score = np.zeros((N_init))
+        
+        for i in range(N_init):
+            self.mu = tf.Variable(means[i], name="mu", dtype=tf.dtypes.float32)
+            self.pre_sigma = tf.Variable(pre_sigmas[i], name="sigma", dtype=tf.dtypes.float32)
+            
+            loss_value = -tf.reduce_mean(self(x)).numpy()
+            score[i] = loss_value
+        idx = np.argmax(score) # Index of best performing set
+
+        # Set initial best values of parameters
+        self.mu = tf.Variable(means[idx], name="mu", dtype=tf.dtypes.float32)
+        self.pre_sigma = tf.Variable(pre_sigmas[idx], name="sigma", dtype=tf.dtypes.float32)
+        return None
     
     def n_parameters(self):
         """ Returns the number of parameters in model """

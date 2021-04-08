@@ -7,6 +7,7 @@ import numpy as np
 tfd = tfp.distributions   
 tfm = tf.math
 
+
 class CPGaussian(tf.keras.Model):
     def __init__(self, K, M, seed = None):
         super(CPGaussian, self).__init__()
@@ -41,7 +42,6 @@ class CPGaussian(tf.keras.Model):
     def call(self, data):
         if data.shape[1] != self.M:
             raise Exception('Data has wrong dimensions')
-            
             
         # Go from logits -> weights
         W = tf.nn.softmax(self.W_logits, axis=1) # axis 1 as it is (1, K)
@@ -105,7 +105,7 @@ class CPGaussian(tf.keras.Model):
     
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS),desc='Training CP',disable=mute):    
+        for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
             loss = 0
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 

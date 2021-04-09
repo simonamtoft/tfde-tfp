@@ -66,6 +66,8 @@ def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT',
             if model_name == 'GMM': # Sklearn trains differently than us
                 model.fit(X_train)
                 losses = [-model.score(X_train)]
+            if model_name == 'CP':
+                losses = model.fit(dataset_train, epochs, optimizer, mute=True, mu_init='random')
             else:
                 losses = model.fit(dataset_train, epochs, optimizer, mute=True)
             

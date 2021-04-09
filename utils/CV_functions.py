@@ -13,9 +13,8 @@ tfd = tfp.distributions
 tfm = tf.math
 
 
-def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT', CV_splits=5,
-              epochs=200, optimizer=None, 
-              batch_size=100):
+def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT', 
+              CV_splits=5, epochs=200, optimizer=None, batch_size=100):
     """
     1-fold Cross validation function
     
@@ -60,7 +59,7 @@ def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT', CV_splits=5,
             elif model_name == 'CP':
                 model = m.CPGaussian(K, M)
             elif model_name == 'GMM':
-                model = GaussianMixture(n_components=K, covariance_type='full', n_init=5, init_params='kmeans')
+                model = GaussianMixture(n_components=K, covariance_type='full', n_init=5, init_params='random')
             else:
                 raise Exception('Provided model_name not valid')
                 

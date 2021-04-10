@@ -60,25 +60,7 @@ class CPGaussian(tf.keras.Model):
         # add small number to avoid nan
         log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
-    
-    # def init_mu(self, data, mode='kmeans'):
-    #     """ Initializes the means
-    #     mode = 'kmeans' : Initialize using KMmeans algorithm
-    #     mode = 'random' : Initialize using random
-    #     """
-    #     if mode == 'kmeans':
-    #         kmeans = KMeans(n_clusters=self.K).fit(data)
-    #         mu_kmeans = kmeans.cluster_centers_
-    #         self.mu = tf.Variable(mu_kmeans, name="mu", dtype=tf.dtypes.float32)
-    #     elif mode == 'random':
-    #         mins = np.min(data,axis=0)
-    #         maxs = np.max(data,axis=0)  
 
-    #         mu_rand = np.random.uniform(mins,maxs, size=(self.K, self.M))
-    #         self.mu = tf.Variable(mu_rand, name="mu", dtype=tf.dtypes.float32)
-    #     else:
-    #         raise Exception('Specified mu initialization not valid')
-    #     return None
     def init_parameters(self, dataset, mode = 'kmeans', N_init = 200):
         """ Initializes the means
         mode = 'kmeans' : Initialize using KMmeans algorithm

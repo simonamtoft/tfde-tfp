@@ -61,23 +61,71 @@ class CPGaussian(tf.keras.Model):
         log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
     
-    def init_mu(self, data, mode='kmeans'):
+    # def init_mu(self, data, mode='kmeans'):
+    #     """ Initializes the means
+    #     mode = 'kmeans' : Initialize using KMmeans algorithm
+    #     mode = 'random' : Initialize using random
+    #     """
+    #     if mode == 'kmeans':
+    #         kmeans = KMeans(n_clusters=self.K).fit(data)
+    #         mu_kmeans = kmeans.cluster_centers_
+    #         self.mu = tf.Variable(mu_kmeans, name="mu", dtype=tf.dtypes.float32)
+    #     elif mode == 'random':
+    #         mins = np.min(data,axis=0)
+    #         maxs = np.max(data,axis=0)  
+
+    #         mu_rand = np.random.uniform(mins,maxs, size=(self.K, self.M))
+    #         self.mu = tf.Variable(mu_rand, name="mu", dtype=tf.dtypes.float32)
+    #     else:
+    #         raise Exception('Specified mu initialization not valid')
+    #     return None
+    def init_parameters(self, dataset, mode = 'kmeans', N_init = 200):
         """ Initializes the means
         mode = 'kmeans' : Initialize using KMmeans algorithm
         mode = 'random' : Initialize using random
+        
+        and initializes the variance
         """
+        # This is really ugly right now and could be fixed
+        for data in (dataset): 
+            break
+        
         if mode == 'kmeans':
             kmeans = KMeans(n_clusters=self.K).fit(data)
             mu_kmeans = kmeans.cluster_centers_
             self.mu = tf.Variable(mu_kmeans, name="mu", dtype=tf.dtypes.float32)
         elif mode == 'random':
-            mins = np.min(data,axis=0)
-            maxs = np.max(data,axis=0)  
-
-            mu_rand = np.random.uniform(mins,maxs, size=(self.K, self.M))
-            self.mu = tf.Variable(mu_rand, name="mu", dtype=tf.dtypes.float32)
+            # Find the limits of the means
+            means_min = np.min(data,axis=0)
+            means_max = np.max(data,axis=0)  
         else:
             raise Exception('Specified mu initialization not valid')
+            
+        
+        # Find the limits of the variance
+        std_max = np.std(data,axis=0)
+        
+        # Initialize parameter arrays
+        pre_sigmas = np.random.uniform(0, std_max, (N_init, self.K, self.M))
+        if mode == 'random':
+            means = np.random.uniform(means_min,means_max, size=(N_init, self.K, self.M))
+        
+        # Initialize score array
+        score = np.zeros((N_init))
+        
+        for i in range(N_init):
+            self.sigma = tf.Variable(pre_sigmas[i], name="sigma", dtype=tf.dtypes.float32)
+            if mode == 'random':
+                self.mu = tf.Variable(means[i], name="mu", dtype=tf.dtypes.float32)
+            loss_value = -tf.reduce_mean(self(data)).numpy()
+            score[i] = loss_value
+        idx = np.argmax(score) # Index of best performing set
+        
+        # Set initial best values of parameters
+        self.sigma = tf.Variable(pre_sigmas[idx], name="sigma", dtype=tf.dtypes.float32)
+        if mode == 'random':
+                self.mu = tf.Variable(means[idx], name="mu", dtype=tf.dtypes.float32)
+        
         return None
     
     @tf.function
@@ -94,11 +142,8 @@ class CPGaussian(tf.keras.Model):
     
     def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans', mute=False):
         """ Fits model to a dataset """
-        # Initialize mu
-        # This is really ugly right now and could be fixed
-        for x in (dataset): 
-            break
-        self.init_mu(x, mode=mu_init)
+        # Initialize parameters
+        self.init_parameters(dataset, mode = mu_init, N_init = 200)
         
         if optimizer == None:
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)

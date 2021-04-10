@@ -11,7 +11,7 @@ tfd = tfp.distributions
 tfm = tf.math
 
 #%% Set data parameters
-N = 10000
+N = 2000
 data_names = d.get_toy_names()
 name = data_names[7]
 
@@ -33,7 +33,7 @@ K = 8 # Number of components
 M = data.shape[1] # Number of dimensions in data
 model = m.CPGaussian(K,M)
 
-EPOCHS = 30
+EPOCHS = 200
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -64,3 +64,22 @@ plt.show()
 integrand = utl.unitTest(model,limits=[-6,6])
 print(f'Density integrates to {round(integrand,4)}')
 print('It should be = 1.0')
+
+
+#%%
+print('\n\nIMPLEMENT A GMM THAT WORKS EXACTLY LIKE OUR OTHER MODELS')
+
+# X = data
+# from sklearn.mixture import GaussianMixture
+# import warnings
+
+# gmm = GaussianMixture(K,covariance_type = 'full',tol=1e-4,max_iter=1)
+
+# for i in range(100):
+#     with warnings.catch_warnings(): 
+#         gmm.fit(X)
+
+
+# gmm.score_samples(X)
+
+

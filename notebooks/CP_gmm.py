@@ -13,7 +13,7 @@ tfm = tf.math
 #%% Set data parameters
 N = 2000
 data_names = d.get_toy_names()
-name = data_names[7]
+name = data_names[0]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
@@ -32,13 +32,14 @@ dataset = d.to_tf_dataset(data, batch_size=batch_size)
 K = 8 # Number of components
 M = data.shape[1] # Number of dimensions in data
 model = m.CPGaussian(K,M)
+# model = m.GMM(K,M)
 
 EPOCHS = 200
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
 losses = model.fit(dataset,EPOCHS,optimizer,'kmeans')
-
+# losses = model.fit(data,10,'kmeans')
 
 f,ax = plt.subplots()
 ax.plot(range(len(losses)),np.array(losses))
@@ -66,20 +67,25 @@ print(f'Density integrates to {round(integrand,4)}')
 print('It should be = 1.0')
 
 
-#%%
-print('\n\nIMPLEMENT A GMM THAT WORKS EXACTLY LIKE OUR OTHER MODELS')
-
-# X = data
-# from sklearn.mixture import GaussianMixture
-# import warnings
-
-# gmm = GaussianMixture(K,covariance_type = 'full',tol=1e-4,max_iter=1)
-
-# for i in range(100):
-#     with warnings.catch_warnings(): 
-#         gmm.fit(X)
 
 
-# gmm.score_samples(X)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

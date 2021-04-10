@@ -7,6 +7,7 @@ import numpy as np
 tfd = tfp.distributions   
 tfm = tf.math
 
+
 class CPGaussian(tf.keras.Model):
     def __init__(self, K, M, seed = None):
         super(CPGaussian, self).__init__()
@@ -35,13 +36,10 @@ class CPGaussian(tf.keras.Model):
         self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
         self.sigma = tf.Variable(sigma, name="sigma", dtype=tf.dtypes.float32)
         self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
-        
-        return None
     
     def call(self, data):
         if data.shape[1] != self.M:
             raise Exception('Data has wrong dimensions')
-            
             
         # Go from logits -> weights
         W = tf.nn.softmax(self.W_logits, axis=1) # axis 1 as it is (1, K)
@@ -63,7 +61,7 @@ class CPGaussian(tf.keras.Model):
         log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
     
-    def init_mu(self, data, mode = 'kmeans'):
+    def init_mu(self, data, mode='kmeans'):
         """ Initializes the means
         mode = 'kmeans' : Initialize using KMmeans algorithm
         mode = 'random' : Initialize using random
@@ -94,18 +92,20 @@ class CPGaussian(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
     
-    def fit(self, dataset, EPOCHS=200, optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3),
-            mu_init='kmeans',mute = False):
+    def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans', mute=False):
         """ Fits model to a dataset """
         # Initialize mu
         # This is really ugly right now and could be fixed
         for x in (dataset): 
             break
-        self.init_mu(x, mode = mu_init)
-    
+        self.init_mu(x, mode=mu_init)
+        
+        if optimizer == None:
+            optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS),desc='Training CP',disable=mute):    
+        for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
             loss = 0
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 

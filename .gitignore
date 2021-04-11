@@ -9,3 +9,12 @@ data/real_data/1000_test.csv.gz
 data/real_data/miniboone_data.npy
 data/real_data/hepmass_test.npy
 data/real_data/hepmass_train.npy
+data/BSDS300
+data/cifar10
+data/gas
+data/hepmass
+data/miniboone
+data/mnist
+data/PaxHeader
+data/power
+.vscode

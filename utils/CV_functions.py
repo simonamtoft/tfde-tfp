@@ -29,11 +29,20 @@ def data_split(data, train_idx, test_idx, batch_size):
 
 def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT', 
               CV_splits=5, epochs=200, optimizer=None, batch_size=100):
-    """
-    1-fold Cross validation function
+    """ 1-fold Cross Validation
     
-    Ks          :   tuple or scalar. Should be a list of values that are divisible by 2
-    model_name  :   Name of model to test with options 'TT', 'CP', or 'GMM'
+    Input
+        data        :   The data to fit and test on. The method will split this 
+                        into a training and testing self itself.
+        Ks          :   Array or int of K values for the model
+        model_name  :   Name of model to test ('TT', 'CP', 'GMM')
+        epochs      :   How many epochs to use for fitting of the model
+        optimizer   :   A tf.keras.optimizers to use for fitting the model
+        batch_size  :   The desired batch size for the training data
+    
+    Return
+        err_tr      :   Error on the training set
+        err_tst     :   Error on the testing set
     """ 
 
     if optimizer == None:
@@ -41,7 +50,7 @@ def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT',
 
     if np.isscalar(Ks): # Transform
         Ks = (Ks,)
-    
+
     M = data.shape[1] # Dimension of data
     
     # Split data and shuffle
@@ -64,25 +73,22 @@ def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT',
             # Fit model to training data
             if model_name == 'TT':
                 model = m.TensorTrainGaussian(K, M)
-                losses = model.fit(ds_train, epochs, optimizer, mute=True)
+                train_loss = model.fit(ds_train, epochs, optimizer, mute=True)
+                test_loss = model(X_test)
             elif model_name == 'CP':
                 model = m.CPGaussian(K, M)
-                losses = model.fit(ds_train, epochs, optimizer, mute=True, mu_init='random')
+                train_loss = model.fit(ds_train, epochs, optimizer, mute=True, mu_init='random')
+                test_loss = model(X_test)
             elif model_name == 'GMM':
                 model = GaussianMixture(n_components=K, covariance_type='full', n_init=5, init_params='random')
                 model.fit(X_train)
-                losses = [-model.score(X_train)]
+                train_loss = [-model.score(X_train)]
+                test_loss = model.score_samples(X_test)
             else:
                 raise Exception('Provided model_name not valid')
             
-            error_train[i, j] = losses[-1]
-            
-            # Get negative log-likelihood on test data
-            if model_name == 'GMM': # Sklearn trains differently than us
-                log_likelihoods_test = model.score_samples(X_test)
-            else:
-                log_likelihoods_test =  model(X_test)
-            error_test[i, j] = -tf.reduce_mean(log_likelihoods_test).numpy()
+            error_train[i, j] = train_loss[-1]
+            error_test[i, j] = -tf.reduce_mean(test_loss).numpy()
     
         # Get average error across splits
         err_tr = np.mean(error_train, axis=0) # mean training error over the CV folds

@@ -3,7 +3,22 @@ sys.path.append('../')
 import models as m
 
 
-def get_fair_Ks(K_tt, M, even=False):
+def get_fair_Ks(Ks_tt, M, even=False):
+    """ Get fair parameters.
+    Wrapper function that calls compute_fair multiple times.
+    Ks_tt is supposed to be an integer or array of integers of K values
+    for the TT model. M is the dimension of the data.
+    """
+    Ks_cp = []
+    Ks_gmm = []
+    for K in Ks_tt:
+        K_gmm, K_cp = compute_fair(K, M, even)
+        Ks_cp.append(K_cp)
+        Ks_gmm.append(K_gmm)
+    return Ks_cp, Ks_gmm
+
+
+def compute_fair(K_tt, M, even=False):
     """ Computes fair parameters.
     Computes parameters for the GMM and CP models, 
     such that the three models can be compared fairly.
@@ -42,4 +57,8 @@ def get_fair_Ks(K_tt, M, even=False):
         K_cp += addi
         n_cp = m.CPGaussian(K_cp, M).n_parameters()
 
-    return K_tt, K_gmm, K_cp
+    return K_gmm, K_cp
+
+
+
+

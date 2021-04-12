@@ -13,7 +13,7 @@ tfm = tf.math
 #%% Set data parameters
 N = 2000
 data_names = d.get_toy_names()
-name = data_names[0]
+name = data_names[7]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
@@ -25,7 +25,7 @@ ax.set_title(name + f' with {N} points')
 plt.show()
 
 # Split into batches
-batch_size = 100
+batch_size = 200
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters

@@ -1,22 +1,20 @@
 import sys
 import os
-# os.chdir("../")
 sys.path.append('../')
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import utils as utl
-import data as d
 import models as m
-import datasets
+import datasets as d
 tfd = tfp.distributions
 tfm = tf.math
 
 #%% Load data
-names = datasets.get_dataset_names()
+names = d.get_dataset_names()
 name = names[5]
-data, X_train, X_val, X_test = datasets.load_data(name)
+data, X_train, X_val, X_test = d.load_data(name)
 
 # # Dimension of data
 M = X_train.shape[1]

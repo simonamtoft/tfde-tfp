@@ -4,7 +4,7 @@ import tensorflow as tf
 import tensorflow_probability as tfp
 import utils as utl
 import time
-import data as d
+import datasets as d
 import models as m
 from tqdm import tqdm
 from sklearn.mixture import GaussianMixture

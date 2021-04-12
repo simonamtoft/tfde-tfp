@@ -6,6 +6,7 @@ import numpy as np
 import sklearn
 import sklearn.datasets
 from sklearn.utils import shuffle as util_shuffle
+import tensorflow as tf
 
 def get_toy_names():
     return [
@@ -43,6 +44,30 @@ def get_ffjord_data(name='8gaussians', batch_size=200, rng=None):
     # Convert to float32 data type
     data = data.astype(np.float32)
     return data
+
+# Convert the data to a TF dataset 
+# from this: https://www.tensorflow.org/guide/keras/writing_a_training_loop_from_scratch/ 
+def to_tf_dataset(data, batch_size=500):
+    tf_data = tf.data.Dataset.from_tensor_slices((data))
+    tf_data = tf_data.shuffle(buffer_size=1024).batch(batch_size)
+    return tf_data
+
+
+def split_data(data, validate_split=0.1, test_split=0.1):
+    """ Splits data into train, validation and test set 
+    By default dataset is split into:
+        Train    : 80%
+        Validate : 10%
+        Test     : 10%
+    """
+    N_test = int(test_split * data.shape[0])
+    N_validate = int(validate_split * data.shape[0]) + N_test
+
+    data_test = data[:N_test]
+    data_validate = data[N_test:N_validate]
+    data_train = data[N_validate:]
+
+    return data_train, data_validate, data_test
 
 
 def gen_swissroll(rng=None, batch_size=200):

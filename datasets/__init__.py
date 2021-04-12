@@ -1,4 +1,4 @@
-root = '../data/'
+root = '../datasets/raw/'
 
 from .power import POWER
 from .gas import GAS
@@ -9,3 +9,9 @@ from .mnist import MNIST
 from .cifar10 import CIFAR10
 from .datasets_selector import load_data
 from .datasets_selector import get_dataset_names
+
+# Toy data
+from .toy_data import gen_cos, gen_line, gen_checkerboard, gen_2spirals, \
+    gen_pinwheel, gen_8gaussians, gen_moons, gen_rings, gen_circles, \
+    gen_swissroll, get_ffjord_data, get_toy_names
+from .toy_data import to_tf_dataset,split_data

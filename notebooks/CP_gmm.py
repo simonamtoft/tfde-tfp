@@ -31,15 +31,15 @@ dataset = d.to_tf_dataset(data, batch_size=batch_size)
 #%% Define model and training parameters
 K = 8 # Number of components
 M = data.shape[1] # Number of dimensions in data
-# model = m.CPGaussian(K,M)
-model = m.GMM(K,M)
+model = m.CPGaussian(K,M)
+# model = m.GMM(K,M)
 
 EPOCHS = 200
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
-# losses = model.fit(dataset,EPOCHS,optimizer,'kmeans')
-losses = model.fit(data,10,'kmeans')
+losses = model.fit(dataset,EPOCHS,optimizer,'kmeans')
+# losses = model.fit(data,10,'kmeans')
 
 f,ax = plt.subplots()
 ax.plot(range(len(losses)),np.array(losses))

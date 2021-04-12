@@ -47,18 +47,17 @@ class CPGaussian(tf.keras.Model):
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = tfm.softplus(self.sigma)
         
-        product = W
+        product = tfm.log(W)
         for i in range(self.M):
-          result = tfm.exp(tfd.Normal(self.mu[:,i], sigma[:,i]).log_prob(
+          result = tfd.Normal(self.mu[:,i], sigma[:,i]).log_prob(
                   data[:, tf.newaxis, i]
-              ))
+              )
+          product = product + result
           
-          product = tf.multiply(product,result)
-          
-        likelihoods = tf.squeeze(tf.reduce_sum(product, axis=1))
+        log_likelihoods = tf.squeeze(tf.reduce_logsumexp(product, axis=1))
         
         # add small number to avoid nan
-        log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
+        #log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
 
     def init_parameters(self, dataset, mode = 'kmeans', N_init = 200):

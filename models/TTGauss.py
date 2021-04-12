@@ -38,7 +38,7 @@ class TensorTrainModel(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
 
-    def fit(self, dataset, epochs=200, optimizer=None, mute=False):
+    def fit(self, dataset, epochs=200, optimizer=None, mute=False,N_init = 100):
         """Fits model to a dataset
         Input
             dataset     (tf.dataset)            :   The training data to fit the model on.
@@ -55,7 +55,7 @@ class TensorTrainModel(tf.keras.Model):
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
           
         # Initialize parameters
-        self.init_parameters(dataset,N_init = 200)
+        self.init_parameters(dataset,N_init = N_init)
 
         losses = []
         start_time = time.time()

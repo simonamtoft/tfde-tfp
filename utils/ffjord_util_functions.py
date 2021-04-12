@@ -1,4 +1,3 @@
-# from itertools import izip
 import os
 import numpy as np
 import numpy.random as rng

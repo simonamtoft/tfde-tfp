@@ -60,7 +60,7 @@ class CPGaussian(tf.keras.Model):
         #log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
 
-    def init_parameters(self, dataset, mode = 'kmeans', N_init = 200):
+    def init_parameters(self, dataset, mode = 'kmeans', N_init = 100):
         """ Initializes the means
         mode = 'kmeans' : Initialize using KMmeans algorithm
         mode = 'random' : Initialize using random
@@ -121,10 +121,11 @@ class CPGaussian(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
     
-    def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans', mute=False):
+    def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
+            mute=False,N_init = 100):
         """ Fits model to a dataset """
         # Initialize parameters
-        self.init_parameters(dataset, mode = mu_init, N_init = 200)
+        self.init_parameters(dataset, mode = mu_init, N_init = N_init)
         
         if optimizer == None:
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)

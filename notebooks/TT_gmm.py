@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_probability as tfp
 import utils as utl
-import data as d
+import datasets as d
 import models as m
 tfd = tfp.distributions
 tfm = tf.math

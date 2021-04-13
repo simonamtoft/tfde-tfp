@@ -6,7 +6,6 @@ from tqdm import tqdm
 tfd = tfp.distributions
 tfm = tf.math
 
-
 class TensorTrainModel(tf.keras.Model):
     def __init__(self, K, M, seed=None):
         super(TensorTrainModel, self).__init__()
@@ -31,7 +30,7 @@ class TensorTrainModel(tf.keras.Model):
         with tf.GradientTape() as tape:
             log_likelihoods = self(data)
             loss_value = -tf.reduce_mean(log_likelihoods)
-    
+                
         # Compute gradients
         tvars = self.trainable_variables
         gradients = tape.gradient(loss_value, tvars)
@@ -63,7 +62,10 @@ class TensorTrainModel(tf.keras.Model):
             loss = 0
             for i, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
+                # if any(tfm.is_nan(self(x))):
+                #     raise Exception('Nan detected')
             losses.append(loss.numpy() / len(dataset))
+            
 
         end_time = time.time()
         if not mute:
@@ -115,6 +117,7 @@ class TensorTrainGaussian(TensorTrainModel):
         # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
         sigma = tfm.softplus(self.pre_sigma)
   
+        ######### Multiply in exp_domain
         product = tf.eye(wk0.shape[1]) # start out with identity matrix
         for i in range(self.M):
           result = tfm.exp(
@@ -136,8 +139,44 @@ class TensorTrainGaussian(TensorTrainModel):
         likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
   
         # add small number to avoid nan
-        log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
+        log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)    
+        
+        ######### Multiply in log_domain
+        # product = self.logdot(tf.expand_dims(tfm.log(W[0]),axis=0),tfd.Normal(self.mu, sigma).log_prob(
+        #   X[:, tf.newaxis, tf.newaxis, 0]))
+        # product = tf.transpose(product, perm=[0, 2, 1])
+        # for i in range(1,self.M):
+        #     result = self.logdot(tf.expand_dims(tfm.log(W[i]),axis=0), tfd.Normal(self.mu, sigma).log_prob(
+        #           X[:, tf.newaxis, tf.newaxis, i]))
+        #     product = self.logdot(product, tf.transpose(result, perm=[0, 2, 1]))
+
+        # log_likelihoods = tf.reduce_logsumexp(tf.reduce_logsumexp(tfm.log(wk0)+product, axis=1),axis=1)
+        
         return log_likelihoods
+    
+    def logdot(self, a, b):
+        """ Multiply matrices in log domain
+        https://stackoverflow.com/questions/23630277/numerically-stable-way-to-multiply-log-probability-matrices-in-numpy
+        """
+        max_a = tfm.reduce_max(a)
+        max_b = tfm.reduce_max(b)
+        exp_a, exp_b = a - max_a, b - max_b
+        exp_a = tfm.exp(exp_a)
+        exp_b = tfm.exp(exp_b)
+        c = exp_a @ exp_b
+        c = tfm.log(c)
+        c += max_a + max_b
+        return c
+    def logdotexp(self, A, B):
+        """ Multiply matrices in log domain (more stable)
+        https://stackoverflow.com/questions/23630277/numerically-stable-way-to-multiply-log-probability-matrices-in-numpy
+        """
+        max_A = tfm.reduce_max(A,axis=2,keepdims=True)
+        max_B = tfm.reduce_max(B,axis=1,keepdims=True)
+        C = tfm.exp(A - max_A) @ tfm.exp(B-max_B)
+        C = tfm.log(C)
+        C += max_A + max_B
+        return C
 
     def sample(self, N):
         # TO-DO

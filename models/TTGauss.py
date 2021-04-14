@@ -303,9 +303,32 @@ class TensorTrainGeneral(TensorTrainModel):
 
     def sample(self, N):
         # TO-DO
-        # Simply sample from categorical distributions based on wk0 and W logits
-        # And then sample from corresponding distributions.
-        pass
+        # Figure out if there's some way to do this without loops...
+
+        samples = []
+        params = [
+            [
+                [
+                    self.params[m][l] 
+                    if not (m in self.mod and l in self.mod[m])
+                    else 
+                    self.mod[m][l](self.params[m][l])
+                ] for l in range(len(self.params[m])) # for each list of parameters
+            ] for m in range(self.M) # for each dimension
+        ]
+
+        for _ in range(N):
+            sample = []
+            ks = [tfd.Categorical(logits=self.wk0_logits[0]).sample()]
+            for m in range(self.M):
+                ks.append(tfd.Categorical(logits=self.W_logits[m,:,ks[m]]).sample())
+                p = [[p[ks[m+1], ks[m]] for p in ps] for ps in params[m]]
+                sample.append(
+                    self.dists[m](*p).sample()
+                )
+
+            samples.append(np.squeeze(np.array(sample)))
+        return np.array(samples)
     
     def init_parameters(self, dataset,N_init = 100):
         """ Initializes the parameters in the gaussian models 

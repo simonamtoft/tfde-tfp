@@ -29,7 +29,7 @@ batch_size = 100
 dataset = d.to_tf_dataset(data, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 8 # Number of components
+K = 12 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
@@ -48,19 +48,19 @@ plt.show()
 #%% Plot result
 
 f,ax = plt.subplots(figsize=(8,8))
-utl.plot_contours(ax, data, model,alpha=0.1)
+utl.plot_contours(ax, data, model,alpha=0.1,n_points=200)
 ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_contour.png',dpi=300)
 
 
 f,ax = plt.subplots(figsize=(8,5))
-utl.plot_density(ax, model,cmap='hot')
+utl.plot_density(ax, model,cmap='hot',n_points=200)
 ax.set_title(name+' with K = '+str(K)+', epochs = ' + str(EPOCHS))
 plt.show()
 # f.savefig('../figures/TensorTrain/'+name+'_K_'+str(K)+'_density.png',dpi=300)
 
-integrand = utl.unitTest(model,limits=[-6,6])
+integrand = utl.unitTest(model,limits=[-6,6],n_points=200)
 print(f'Density integrates to {round(integrand,4)}')
 print('It should be = 1.0')
 

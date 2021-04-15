@@ -62,8 +62,6 @@ class TensorTrainModel(tf.keras.Model):
             loss = 0
             for i, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
-                # if any(tfm.is_nan(self(x))):
-                #     raise Exception('Nan detected')
             losses.append(loss.numpy() / len(dataset))
             
 
@@ -117,65 +115,72 @@ class TensorTrainGaussian(TensorTrainModel):
         # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
         sigma = tfm.softplus(self.pre_sigma)
   
-        ######### Multiply in exp_domain
-        product = tf.eye(wk0.shape[1]) # start out with identity matrix
-        for i in range(self.M):
-          result = tfm.exp(
-              # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
-              #     # Make data broadcastable into (n, km, kn)
-              #     X[:, tf.newaxis, tf.newaxis, i]
-              # )
-              tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
-                  # Make data broadcastable into (n, km, kn)
-                  X[:, tf.newaxis, tf.newaxis, i]
-              )
-          ) # intermediary calculation in log-domain -> exp after.
-          # Keep batch dimension in place, transpose matrices
-          product = product @ tf.transpose(result, perm=[0, 2, 1])
+        # ######### Multiply in exp_domain
+        # product = tf.eye(wk0.shape[1]) # start out with identity matrix
+        # for i in range(self.M):
+        #   result = tfm.exp(
+        #       # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
+        #       #     # Make data broadcastable into (n, km, kn)
+        #       #     X[:, tf.newaxis, tf.newaxis, i]
+        #       # )
+        #       tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+        #           # Make data broadcastable into (n, km, kn)
+        #           X[:, tf.newaxis, tf.newaxis, i]
+        #       )
+        #   ) # intermediary calculation in log-domain -> exp after.
+        #   # Keep batch dimension in place, transpose matrices
+        #   product = product @ tf.transpose(result, perm=[0, 2, 1])
         
-        # In order: Squeeze (n, 1, k_last) -> (n, k_last).
-        # Reduce sum over k_last into (n, )
-        # Squeeze result to (n, ) if n > 1 or () if n == 1
-        likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
-  
-        # add small number to avoid nan
-        log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)    
+        # # In order: Squeeze (n, 1, k_last) -> (n, k_last).
+        # # Reduce sum over k_last into (n, )
+        # # Squeeze result to (n, ) if n > 1 or () if n == 1
+        # likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
+        # # add small number to avoid nan
+        # log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)    
         
-        ######### Multiply in log_domain
-        # product = self.logdot(tf.expand_dims(tfm.log(W[0]),axis=0),tfd.Normal(self.mu, sigma).log_prob(
-        #   X[:, tf.newaxis, tf.newaxis, 0]))
-        # product = tf.transpose(product, perm=[0, 2, 1])
-        # for i in range(1,self.M):
-        #     result = self.logdot(tf.expand_dims(tfm.log(W[i]),axis=0), tfd.Normal(self.mu, sigma).log_prob(
-        #           X[:, tf.newaxis, tf.newaxis, i]))
-        #     product = self.logdot(product, tf.transpose(result, perm=[0, 2, 1]))
-
-        # log_likelihoods = tf.reduce_logsumexp(tf.reduce_logsumexp(tfm.log(wk0)+product, axis=1),axis=1)
+        ######### Multiply in log_domain  
+        # Inner product
+        product = tfm.log(W[0]) + tfd.Normal(self.mu, sigma).log_prob(
+          X[:, tf.newaxis, tf.newaxis, 0])
+        product = tf.transpose(product, perm=[0, 2, 1])
+        for i in range(1,self.M):
+            result = tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                  X[:, tf.newaxis, tf.newaxis, i])    
+            product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
+        
+        # Multiply with wk0
+        prod = self.log_space_product_vector_tf(tf.expand_dims(tfm.log(wk0),axis=1),product)
+        log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
         
         return log_likelihoods
     
-    def logdot(self, a, b):
-        """ Multiply matrices in log domain
-        https://stackoverflow.com/questions/23630277/numerically-stable-way-to-multiply-log-probability-matrices-in-numpy
-        """
-        max_a = tfm.reduce_max(a)
-        max_b = tfm.reduce_max(b)
-        exp_a, exp_b = a - max_a, b - max_b
-        exp_a = tfm.exp(exp_a)
-        exp_b = tfm.exp(exp_b)
-        c = exp_a @ exp_b
-        c = tfm.log(c)
-        c += max_a + max_b
-        return c
-    def logdotexp(self, A, B):
+    def log_space_product_tf(self, A, B):
         """ Multiply matrices in log domain (more stable)
-        https://stackoverflow.com/questions/23630277/numerically-stable-way-to-multiply-log-probability-matrices-in-numpy
+        https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
+        
+        input : 
+            A = Tensor([N,K,K])
+            B = Tensor([N,K,K])
+        output :
+            C = Tensor([N,K,K])
         """
-        max_A = tfm.reduce_max(A,axis=2,keepdims=True)
-        max_B = tfm.reduce_max(B,axis=1,keepdims=True)
-        C = tfm.exp(A - max_A) @ tfm.exp(B-max_B)
-        C = tfm.log(C)
-        C += max_A + max_B
+        Astack = tf.transpose(tf.stack([A]*A.shape[1],axis=1),perm=[0,3,2,1])
+        Bstack = tf.transpose(tf.stack([B]*B.shape[2],axis=1),perm=[0,2,1,3])
+        C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
+        return C
+    def log_space_product_vector_tf(self, a, B):
+        """ Multiply vector with matrix in log domain (more stable)
+        https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
+        
+        input : 
+            a = Tensor([N,1,K])
+            B = Tensor([N,K,K])
+        output :
+            C = Tensor([N,K])
+        """
+        Astack = tf.transpose(a,perm=[0,2,1])
+        Bstack = tf.transpose(B,perm=[0,1,2])
+        C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
         return C
 
     def sample(self, N):

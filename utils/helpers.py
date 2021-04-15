@@ -58,7 +58,3 @@ def compute_fair(K_tt, M, even=False):
         n_cp = m.CPGaussian(K_cp, M).n_parameters()
 
     return K_gmm, K_cp
-
-
-
-

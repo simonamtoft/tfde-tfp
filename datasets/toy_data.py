@@ -8,10 +8,13 @@ import sklearn.datasets
 from sklearn.utils import shuffle as util_shuffle
 import tensorflow as tf
 
+DEFAULT_SPLIT = (0.4, 0.30, 0.3)
+
+
 def get_toy_names():
     return [
         '8gaussians', 'swissroll', 'circles', 'rings', 'moons',
-        'pinwheel', '2spirals', 'checkerboard', 'line', 'cos'
+        'pinwheel', '2spirals', 'checkerboard', 'line', 'cos',
     ]
 
 
@@ -44,6 +47,7 @@ def get_ffjord_data(name='8gaussians', batch_size=200, rng=None):
     # Convert to float32 data type
     data = data.astype(np.float32)
     return data
+
 
 # Convert the data to a TF dataset 
 # from this: https://www.tensorflow.org/guide/keras/writing_a_training_loop_from_scratch/ 
@@ -144,10 +148,13 @@ def gen_moons(rng=None, batch_size=200):
 def gen_8gaussians(rng=None, batch_size=200):
     if rng is None:
         rng = np.random.RandomState()
-
     scale = 4.
+
     centers = [
-        (1, 0), (-1, 0), (0, 1), (0, -1), 
+        (1, 0), 
+        (-1, 0), 
+        (0, 1), 
+        (0, -1), 
         (1. / np.sqrt(2), 1. / np.sqrt(2)),
         (1. / np.sqrt(2), -1. / np.sqrt(2)), 
         (-1. / np.sqrt(2), 1. / np.sqrt(2)), 
@@ -156,7 +163,7 @@ def gen_8gaussians(rng=None, batch_size=200):
     centers = [(scale * x, scale * y) for x, y in centers]
 
     dataset = []
-    for i in range(batch_size):
+    for _ in range(batch_size):
         point = rng.randn(2) * 0.5
         idx = rng.randint(8)
         center = centers[idx]
@@ -165,6 +172,69 @@ def gen_8gaussians(rng=None, batch_size=200):
         dataset.append(point)
     dataset = np.array(dataset, dtype="float32")
     dataset /= 1.414
+    return dataset
+
+
+def gen_8gaussians_d3split(rng=None, batch_size=200, d3split=DEFAULT_SPLIT):
+    if rng is None:
+        rng = np.random.RandomState()
+
+    if np.sum(d3split) != 1.0:
+        d3split = DEFAULT_SPLIT
+        print(f'Split did not add up to 1. Using split: {d3split}')
+    elif len(d3split) != 3:
+        d3split = DEFAULT_SPLIT
+        print(f'Split did not have 3 values. Using split: {d3split}')
+    
+    scale = 4.
+
+    centers_1 = [
+        # (1, 0), 
+        (-1, 0), 
+        (0, 1), 
+        (0, -1), 
+        # (1. / np.sqrt(2), 1. / np.sqrt(2)),
+        (1. / np.sqrt(2), -1. / np.sqrt(2)), 
+        # (-1. / np.sqrt(2), 1. / np.sqrt(2)), 
+        (-1. / np.sqrt(2), -1. / np.sqrt(2))
+    ]
+    centers_2 = [
+        (1, 0), 
+        (-1, 0), 
+        # (0, 1), 
+        (0, -1), 
+        (1. / np.sqrt(2), 1. / np.sqrt(2)),
+        # (1. / np.sqrt(2), -1. / np.sqrt(2)), 
+        # (-1. / np.sqrt(2), 1. / np.sqrt(2)), 
+        (-1. / np.sqrt(2), -1. / np.sqrt(2))
+    ]
+    centers_3 = [
+        (1, 0), 
+        # (-1, 0), 
+        (0, 1), 
+        # (0, -1), 
+        (1. / np.sqrt(2), 1. / np.sqrt(2)),
+        (1. / np.sqrt(2), -1. / np.sqrt(2)), 
+        (-1. / np.sqrt(2), 1. / np.sqrt(2)), 
+        # (-1. / np.sqrt(2), -1. / np.sqrt(2))
+    ]
+    centers_1 = [(scale * x, scale * y) for x, y in centers_1]
+    centers_2 = [(scale * x, scale * y) for x, y in centers_2]
+    centers_3 = [(scale * x, scale * y) for x, y in centers_3]
+
+    dataset = []
+    centersd3 = [centers_1, centers_2, centers_3]
+    for j in range(3):
+        for _ in range(int(batch_size*d3split[j])):
+            point = rng.randn(3) * 0.5
+            idx = rng.randint(len(centersd3[j]))
+            center = centersd3[j][idx]
+            point[0] += center[0]
+            point[1] += center[1]
+            point[2] = j
+            dataset.append(point)
+    dataset = np.array(dataset, dtype="float32")
+    dataset[:, 0:2] /= 1.414
     return dataset
 
 
@@ -216,6 +286,23 @@ def gen_checkerboard(rng=None, batch_size=200):
     x2_ = np.random.rand(batch_size) - np.random.randint(0, 2, batch_size) * 2
     x2 = x2_ + (np.floor(x1) % 2)
     return np.concatenate([x1[:, None], x2[:, None]], 1) * 2
+
+
+def gen_checkerboard_d3split(rng=None, batch_size=200):
+    data = gen_checkerboard(batch_size=batch_size)
+    label = np.zeros_like(data[:, 0])
+    
+    for i in range(label.shape[0]):
+        x1 = data[i, 0]
+        x2 = data[i, 1]
+        if (x1 <= -2 and x2 <= -2 or 
+            x1 <= 0 and x2 >= 2):
+            label[i] = 1
+        elif (x1 >= 2 and x2 >= 2 or 
+            x1 >= -2 and x1 <= 0 and x2 >=-2 and x2 <= 0):
+            label[i] = 2
+
+    return np.transpose(np.stack((data[:, 0], data[:, 1], label)))
 
 
 def gen_line(rng=None, batch_size=200):

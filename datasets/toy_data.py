@@ -288,6 +288,23 @@ def gen_checkerboard(rng=None, batch_size=200):
     return np.concatenate([x1[:, None], x2[:, None]], 1) * 2
 
 
+def gen_checkerboard_d3split(rng=None, batch_size=200):
+    data = gen_checkerboard(batch_size=batch_size)
+    label = np.zeros_like(data[:, 0])
+    
+    for i in range(label.shape[0]):
+        x1 = data[i, 0]
+        x2 = data[i, 1]
+        if (x1 <= -2 and x2 <= -2 or 
+            x1 <= 0 and x2 >= 2):
+            label[i] = 1
+        elif (x1 >= 2 and x2 >= 2 or 
+            x1 >= -2 and x1 <= 0 and x2 >=-2 and x2 <= 0):
+            label[i] = 2
+
+    return np.transpose(np.stack((data[:, 0], data[:, 1], label)))
+
+
 def gen_line(rng=None, batch_size=200):
     if rng is None:
         rng = np.random.RandomState()

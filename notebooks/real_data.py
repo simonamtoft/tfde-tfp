@@ -121,10 +121,10 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%%%
 # from scipy.special import logsumexp
-# # def log_space_product(A, B):
-# #     Astack = np.stack([A]*A.shape[0]).transpose(2,1,0)
-# #     Bstack = np.stack([B]*B.shape[1]).transpose(1,0,2)
-# #     return logsumexp(Astack+Bstack, axis=0)
+# def log_space_product(A, B):
+#     Astack = np.stack([A]*A.shape[0]).transpose(2,1,0)
+#     Bstack = np.stack([B]*B.shape[1]).transpose(1,0,2)
+#     return logsumexp(Astack+Bstack, axis=0)
 # def log_space_product(A, B):
 #     Astack = np.stack([A]*A.shape[1],axis=1).transpose(0,3,2,1)
 #     Bstack = np.stack([B]*B.shape[2],axis=1).transpose(0,2,1,3)
@@ -146,6 +146,17 @@ optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 #     C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
 #     return C
 
+# N = 10
+# M = 5
+# K = 4
+# a = np.random.rand(N,M,K)
+# b = np.random.rand(N,K,M)
+# A = np.log(a)
+# B = np.log(b)
+# A_tf = tf.convert_to_tensor(A)
+# B_tf = tf.convert_to_tensor(B)
+# C_tf = tfm.exp(log_space_product_tf(A,B))
+# C = a@b
 # K = 2
 # N = 1
 # a = np.random.rand(N,K,K)

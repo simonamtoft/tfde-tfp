@@ -159,8 +159,8 @@ class TensorTrainGaussian(TensorTrainModel):
         https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
         
         input : 
-            A = Tensor([N,K,K])
-            B = Tensor([N,K,K])
+            A = Tensor([N,K,M])
+            B = Tensor([N,M,K])
         output :
             C = Tensor([N,K,K])
         """

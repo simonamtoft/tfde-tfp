@@ -1,4 +1,5 @@
 import datasets
+import numpy as np
 root_data = '../data/'       # where the datasets are
 
 def load_data(name,logit=False,dequantize=False,flip = False):
@@ -32,6 +33,11 @@ def load_data(name,logit=False,dequantize=False,flip = False):
     X_train = data.trn.x
     X_val = data.val.x
     X_test = data.tst.x
+    
+    # Convert to float32
+    X_train = X_train.astype(np.float32)
+    X_val = X_val.astype(np.float32)
+    X_test = X_test.astype(np.float32)
     
     return data, X_train, X_val, X_test
 

@@ -37,7 +37,8 @@ class TensorTrainModel(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
 
-    def fit(self, dataset, epochs=200, optimizer=None, mute=False,N_init = 100):
+    def fit(self, dataset, epochs=200, optimizer=None, mute=False,
+            N_init = 100,tolerance=1e-7):
         """Fits model to a dataset
         Input
             dataset     (tf.dataset)            :   The training data to fit the model on.
@@ -63,12 +64,15 @@ class TensorTrainModel(tf.keras.Model):
             for i, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
             losses.append(loss.numpy() / len(dataset))
+            if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
+                break
             
 
         end_time = time.time()
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
+        losses = np.array(losses)
     
         return losses
 
@@ -115,42 +119,43 @@ class TensorTrainGaussian(TensorTrainModel):
         # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
         sigma = tfm.softplus(self.pre_sigma)
   
+        if self.M < 7:
         # ######### Multiply in exp_domain
-        # product = tf.eye(wk0.shape[1]) # start out with identity matrix
-        # for i in range(self.M):
-        #   result = tfm.exp(
-        #       # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
-        #       #     # Make data broadcastable into (n, km, kn)
-        #       #     X[:, tf.newaxis, tf.newaxis, i]
-        #       # )
-        #       tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
-        #           # Make data broadcastable into (n, km, kn)
-        #           X[:, tf.newaxis, tf.newaxis, i]
-        #       )
-        #   ) # intermediary calculation in log-domain -> exp after.
-        #   # Keep batch dimension in place, transpose matrices
-        #   product = product @ tf.transpose(result, perm=[0, 2, 1])
-        
-        # # In order: Squeeze (n, 1, k_last) -> (n, k_last).
-        # # Reduce sum over k_last into (n, )
-        # # Squeeze result to (n, ) if n > 1 or () if n == 1
-        # likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
-        # # add small number to avoid nan
-        # log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)    
-        
-        ######### Multiply in log_domain  
-        # Inner product
-        product = tfm.log(W[0]) + tfd.Normal(self.mu, sigma).log_prob(
-          X[:, tf.newaxis, tf.newaxis, 0])
-        product = tf.transpose(product, perm=[0, 2, 1])
-        for i in range(1,self.M):
-            result = tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
-                  X[:, tf.newaxis, tf.newaxis, i])    
-            product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
-        
-        # Multiply with wk0
-        prod = self.log_space_product_vector_tf(tf.expand_dims(tfm.log(wk0),axis=1),product)
-        log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
+            product = tf.eye(wk0.shape[1]) # start out with identity matrix
+            for i in range(self.M):
+              result = tfm.exp(
+                  # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
+                  #     # Make data broadcastable into (n, km, kn)
+                  #     X[:, tf.newaxis, tf.newaxis, i]
+                  # )
+                  tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                      # Make data broadcastable into (n, km, kn)
+                      X[:, tf.newaxis, tf.newaxis, i]
+                  )
+              ) # intermediary calculation in log-domain -> exp after.
+              # Keep batch dimension in place, transpose matrices
+              product = product @ tf.transpose(result, perm=[0, 2, 1])
+            
+            # In order: Squeeze (n, 1, k_last) -> (n, k_last).
+            # Reduce sum over k_last into (n, )
+            # Squeeze result to (n, ) if n > 1 or () if n == 1
+            likelihoods = tf.squeeze(tf.reduce_sum(tf.squeeze(wk0 @ product, axis=1), axis=1))
+            # add small number to avoid nan
+            log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)    
+        else:
+            ######### Multiply in log_domain  
+            # Inner product
+            product = tfm.log(W[0]) + tfd.Normal(self.mu, sigma).log_prob(
+              X[:, tf.newaxis, tf.newaxis, 0])
+            product = tf.transpose(product, perm=[0, 2, 1])
+            for i in range(1,self.M):
+                result = tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                      X[:, tf.newaxis, tf.newaxis, i])    
+                product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
+            
+            # Multiply with wk0
+            prod = self.log_space_product_vector_tf(tf.expand_dims(tfm.log(wk0),axis=1),product)
+            log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
         
         return log_likelihoods
     

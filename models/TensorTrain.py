@@ -88,10 +88,10 @@ class TensorTrainGaussian(TensorTrainModel):
             seed    (int)   :   Set to other than none in order to reproduce results
         """
         super(TensorTrainGaussian, self).__init__(K, M, seed)
-        # mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
-        # pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
-        mu = np.random.uniform(-4, 4, (self.K, self.K))
-        pre_sigma = np.random.uniform(0, 5, (self.K, self.K))
+        mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
+        pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
+        # mu = np.random.uniform(-4, 4, (self.K, self.K))
+        # pre_sigma = np.random.uniform(0, 5, (self.K, self.K))
         self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
         self.pre_sigma = tf.Variable(pre_sigma, name="sigma", dtype=tf.dtypes.float32)
         return None
@@ -117,22 +117,22 @@ class TensorTrainGaussian(TensorTrainModel):
         W = [tf.nn.softmax(self.W_logits[i], axis=0) for i in range(self.M)]
         
         # Go from raw values -> strictly positive values (ReLU approx.)
-        # sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
-        sigma = tfm.softplus(self.pre_sigma)
+        sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
+        # sigma = tfm.softplus(self.pre_sigma)
   
         if self.M < 7:
         # ######### Multiply in exp_domain
             product = tf.eye(wk0.shape[1]) # start out with identity matrix
             for i in range(self.M):
               result = tfm.exp(
-                  # tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
-                  #     # Make data broadcastable into (n, km, kn)
-                  #     X[:, tf.newaxis, tf.newaxis, i]
-                  # )
-                  tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                  tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
                       # Make data broadcastable into (n, km, kn)
                       X[:, tf.newaxis, tf.newaxis, i]
                   )
+                #   tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                #       # Make data broadcastable into (n, km, kn)
+                #       X[:, tf.newaxis, tf.newaxis, i]
+                #   )
               ) # intermediary calculation in log-domain -> exp after.
               # Keep batch dimension in place, transpose matrices
               product = product @ tf.transpose(result, perm=[0, 2, 1])
@@ -146,11 +146,11 @@ class TensorTrainGaussian(TensorTrainModel):
         else:
             ######### Multiply in log_domain  
             # Inner product
-            product = tfm.log(W[0]) + tfd.Normal(self.mu, sigma).log_prob(
+            product = tfm.log(W[0]) + tfd.Normal(self.mu[0], sigma[0]).log_prob(
               X[:, tf.newaxis, tf.newaxis, 0])
             product = tf.transpose(product, perm=[0, 2, 1])
             for i in range(1,self.M):
-                result = tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
+                result = tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
                       X[:, tf.newaxis, tf.newaxis, i])    
                 product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
             
@@ -234,7 +234,7 @@ class TensorTrainGaussian(TensorTrainModel):
         n_params = 0
         n_params += self.K # From W_k0
         n_params += self.M*self.K*self.K # From W_logits
-        n_params += 2*self.K*self.K # From mu and sigma
+        n_params += 2*self.M*self.K*self.K # From mu and sigma
         
         # Check that trainable params = actual number of parameters
         n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
@@ -336,50 +336,19 @@ class TensorTrainGeneral(TensorTrainModel):
         return np.array(samples)
     
     def init_parameters(self, dataset,N_init = 100):
-        """ Initializes the parameters in the gaussian models 
-        to the lowest value of N_init random initializations
-        """
-        return
-        
-        for i, x in enumerate(dataset):
-            break
-
-        # Find the limits of the parameters
-        means_min = np.min(x)
-        means_max = np.max(x)
-        std_max = np.max(np.std(x,axis=0))
-        
-        # Initialize parameter arrays
-        means = np.random.uniform(means_min, means_max, (N_init, self.K, self.K))
-        pre_sigmas = np.random.uniform(0, std_max, (N_init, self.K, self.K))
-        
-        # Initialize score array
-        score = np.zeros((N_init))
-        
-        for i in range(N_init):
-            self.mu = tf.Variable(means[i], name="mu", dtype=tf.dtypes.float32)
-            self.pre_sigma = tf.Variable(pre_sigmas[i], name="sigma", dtype=tf.dtypes.float32)
-            
-            loss_value = -tf.reduce_mean(self(x)).numpy()
-            score[i] = loss_value
-        idx = np.argmax(score) # Index of best performing set
-
-        # Set initial best values of parameters
-        self.mu = tf.Variable(means[idx], name="mu", dtype=tf.dtypes.float32)
-        self.pre_sigma = tf.Variable(pre_sigmas[idx], name="sigma", dtype=tf.dtypes.float32)
-        return None
+        pass
     
     def n_parameters(self):
         """ Returns the number of parameters in model """
-        n_params = 0
-        n_params += self.K # From W_k0
-        n_params += self.M*self.K*self.K # From W_logits
-        n_params += 2*self.K*self.K # From mu and sigma
+        # n_params = 0
+        # n_params += self.K # From W_k0
+        # n_params += self.M*self.K*self.K # From W_logits
+        # n_params += 2*self.K*self.K # From mu and sigma
         
         # Check that trainable params = actual number of parameters
         n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
-        if n_params2 != n_params:
-            raise Exception("Number of parameters doens't fit with trainable parameters")
+        # if n_params2 != n_params:
+        #     raise Exception("Number of parameters doens't fit with trainable parameters")
         
-        return n_params
+        return n_params2
 

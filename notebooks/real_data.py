@@ -14,7 +14,6 @@ tfm = tf.math
 dataset_names = d.get_dataset_names()
 name = dataset_names[0]
 data, X_train, X_val, X_test = d.load_data(name)
-# X_train = d.get_ffjord_data('checkerboard',batch_size=1000)
 
 
 print(f'\nX_train.shape = {X_train.shape}')
@@ -57,26 +56,40 @@ print(name + ' data loaded...')
 # a = model(tf.convert_to_tensor(X_test_1)).numpy()
 
 #%% Holdout Cross-validation
-N = 2000
-data = d.get_ffjord_data('checkerboard',batch_size=N)
+# N = 2000
+# data = d.get_ffjord_data('checkerboard',batch_size=N)
 
-X_train = data[:int(N*0.8)]
-X_val = data[int(N*0.8):int(N*0.9)]
-X_test = data[int(N*0.9):]
+# X_train = data[:int(N*0.8)]
+# X_val = data[int(N*0.8):int(N*0.9)]
+# X_test = data[int(N*0.9):]
 
 # # Train on small subset
 # idx = np.random.choice(np.arange(X_train.shape[0]),size=2000)
 # X_train_small = X_train[idx]
 
-# Parameters
-# Ks = [4,10,20,50,100]
-Ks = [2,100]
-model_name = 'TT'
-N_init = 3
-epochs = 1
 
-CV_dict = utl.CV_holdout(X_train,X_val, Ks, model_name=model_name,
-                          epochs=epochs, batch_size=400, N_init = N_init)
+Ks = [4,10,20,50,100]
+model_name = 'TT'
+epochs = 2
+N_init = 3
+
+# Train on small subset
+idx = np.random.choice(np.arange(X_train.shape[0]),size=2000)
+X_train_small = X_train[idx]
+
+CV_dict = utl.CV_holdout(X_train_small,X_val, Ks, model_name=model_name,
+                         epochs=epochs, batch_size=400, N_init = N_init)
+
+
+# # Parameters
+# # Ks = [4,10,20,50,100]
+# Ks = [2,100]
+# model_name = 'TT'
+# N_init = 3
+# epochs = 1
+
+# CV_dict = utl.CV_holdout(X_train,X_val, Ks, model_name=model_name,
+#                           epochs=epochs, batch_size=400, N_init = N_init)
 
 
 # Extract information from dict

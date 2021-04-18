@@ -23,7 +23,6 @@ class TensorTrainModel(tf.keras.Model):
         # Define as TensorFlow variables
         self.wk0_logits = tf.Variable(Wk0, name="Wk0_logits", dtype=tf.dtypes.float32)
         self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
-        return None
 
     @tf.function
     def train_step(self, data, optimizer):
@@ -36,6 +35,9 @@ class TensorTrainModel(tf.keras.Model):
         gradients = tape.gradient(loss_value, tvars)
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
+
+    def init_parameters(ds, N_init=None):
+        return NotImplementedError
 
     def fit(self, dataset, epochs=200, optimizer=None, mute=False,
             N_init = 100,tolerance=1e-7):
@@ -55,7 +57,7 @@ class TensorTrainModel(tf.keras.Model):
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
           
         # Initialize parameters
-        self.init_parameters(dataset,N_init = N_init)
+        self.init_parameters(dataset, N_init=N_init)
 
         losses = []
         start_time = time.time()
@@ -66,14 +68,12 @@ class TensorTrainModel(tf.keras.Model):
             losses.append(loss.numpy() / len(dataset))
             if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
                 break
-            
 
         end_time = time.time()
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
         losses = np.array(losses)
-    
         return losses
 
 

@@ -120,6 +120,8 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
 
     if np.isscalar(Ks): # Transform
         Ks = (Ks,)
+        
+    mute = True
 
     M = X_train.shape[1] # Dimension of data
     
@@ -137,20 +139,20 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
         # Fit model to training data
         if model_name == 'TT':
             model = m.TensorTrainGaussian(K, M)
-            train_loss = model.fit(ds_train, epochs, optimizer, mute=True, N_init=N_init)
-            for i,x in enumerate(ds_test):
-                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
+            train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, N_init=N_init)
+            for j,x in enumerate(ds_test):
+                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
         elif model_name == 'CP':
             model = m.CPGaussian(K, M)
-            train_loss = model.fit(ds_train, epochs, optimizer, mute=True, mu_init='random',
+            train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, mu_init='random',
                                    N_init=N_init)
-            for i,x in enumerate(ds_test):
-                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
+            for j,x in enumerate(ds_test):
+                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
         elif model_name == 'GMM':
             model = m.GMM(K,M)
-            train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=True)
-            for i,x in enumerate(ds_test):
-                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
+            train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=mute)
+            for j,x in enumerate(ds_test):
+                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
         else:
             raise Exception('Provided model_name not valid')
         

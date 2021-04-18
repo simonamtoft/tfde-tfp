@@ -57,25 +57,25 @@ print(name + ' data loaded...')
 # a = model(tf.convert_to_tensor(X_test_1)).numpy()
 
 #%% Holdout Cross-validation
-# N = 2000
-# data = d.get_ffjord_data('checkerboard',batch_size=N)
+N = 2000
+data = d.get_ffjord_data('checkerboard',batch_size=N)
 
-# X_train = data[:int(N*0.8)]
-# X_val = data[int(N*0.8):int(N*0.9)]
-# X_test = data[int(N*0.9):]
+X_train = data[:int(N*0.8)]
+X_val = data[int(N*0.8):int(N*0.9)]
+X_test = data[int(N*0.9):]
 
-# Train on small subset
-idx = np.random.choice(np.arange(X_train.shape[0]),size=100000)
-X_train_small = X_train[idx]
+# # Train on small subset
+# idx = np.random.choice(np.arange(X_train.shape[0]),size=2000)
+# X_train_small = X_train[idx]
 
 # Parameters
 # Ks = [4,10,20,50,100]
-Ks = 100
+Ks = [2,100]
 model_name = 'TT'
 N_init = 3
 epochs = 1
 
-CV_dict = utl.CV_holdout(X_train_small,X_val, Ks, model_name=model_name,
+CV_dict = utl.CV_holdout(X_train,X_val, Ks, model_name=model_name,
                           epochs=epochs, batch_size=400, N_init = N_init)
 
 

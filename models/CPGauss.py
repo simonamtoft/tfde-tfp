@@ -163,6 +163,136 @@ class CPGaussian(tf.keras.Model):
             
         return n_params
     
+class CPGeneral(tf.keras.Model):
+    def __init__(self, K, dists, params, mod, seed = None):
+        """ M-dimensional Tensor Train with Gaussian Mixture Models 
+        
+        Input
+            K       (int)   :   Number of components pr. mixture
+            dists   (list)  :   List of M distributions
+            params  (list)  :   List of M lists of parameters
+            mod     (dict)  :   Dict which dimensions need modifiers (e.g. softmax, softplus)
+            seed    (int)   :   Set to other than none in order to reproduce results
+        """
+        super(CPGeneral, self).__init__()
+        self.K = K
+        self.M = len(dists)
+        self.dists  = dists
+        self.params = [ [tf.Variable(p, dtype=tf.float32) for p in lp] for lp in params ]
+        self.mod = mod
+        W_logits = np.ones((1, self.K))      
+        self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
+            
+    def call(self, data):
+        if data.shape[1] != self.M:
+            raise Exception('Data has wrong dimensions')
+            
+        # Go from logits -> weights
+        W = tf.nn.softmax(self.W_logits, axis=1) # axis 1 as it is (1, K)
+        
+        params = [
+            [
+                [
+                    self.params[m][l] 
+                    if not (m in self.mod and l in self.mod[m])
+                    else 
+                    self.mod[m][l](self.params[m][l])
+                ] for l in range(len(self.params[m])) # for each list of parameters
+            ] for m in range(self.M) # for each dimension
+        ]
+        
+        product = tfm.log(W)
+        for i in range(self.M):
+          result = self.dists[i](*params[i]).log_prob(
+                  data[:, tf.newaxis, i]
+              )
+          product = product + result
+          
+        log_likelihoods = tf.squeeze(tf.reduce_logsumexp(product, axis=1))
+        
+        # add small number to avoid nan
+        #log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
+        return log_likelihoods
+
+    def init_parameters(self, dataset, mode = 'kmeans', N_init = 100):
+        pass
+    
+    @tf.function
+    def train_step(self, data, optimizer):
+        tvars = self.trainable_variables
+        with tf.GradientTape() as tape:
+            log_likelihoods = self(data)
+            loss_value = -tf.reduce_mean(log_likelihoods)
+            # Compute gradients
+            gradients = tape.gradient(loss_value, tvars)
+            
+        optimizer.apply_gradients(zip(gradients, tvars))
+        return loss_value
+    
+    def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
+            mute=False,N_init = 100):
+        """ Fits model to a dataset """
+        # Initialize parameters
+        self.init_parameters(dataset, mode = mu_init, N_init = N_init)
+        
+        if optimizer == None:
+            optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
+        losses = []
+        start_time = time.time()
+        for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
+            loss = 0
+            for i,x in enumerate(dataset):
+                loss += self.train_step(x,optimizer) 
+            losses.append(loss.numpy()/len(dataset))
+                
+        end_time = time.time()
+        if not mute:
+            print(f'Training time elapsed: {int(end_time-start_time)} seconds')
+            print(f'Final loss: {losses[-1]}')
+    
+        return losses
+    def sample(self, N):
+        # TO-DO
+        # Figure out if there's some way to do this without loops...
+
+        samples = []
+        params = [
+            [
+                [
+                    self.params[m][l] 
+                    if not (m in self.mod and l in self.mod[m])
+                    else 
+                    self.mod[m][l](self.params[m][l])
+                ] for l in range(len(self.params[m])) # for each list of parameters
+            ] for m in range(self.M) # for each dimension
+        ]
+
+        for _ in range(N):
+            sample = []
+            ks = tfd.Categorical(logits=self.W_logits[0]).sample()
+            for m in range(self.M):
+                p = [[p[ks] for p in ps] for ps in params[m]]
+                sample.append(
+                    self.dists[m](*p).sample()
+                )
+
+            samples.append(np.squeeze(np.array(sample)))
+        return np.array(samples)
+    
+    def n_parameters(self):
+        """ Returns the number of parameters in model """
+        # n_params = 0
+        # n_params += self.K # From W_logits
+        # n_params += 2*self.K*self.M # From mu and sigma
+
+        # Check that trainable params = actual number of parameters
+        n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
+        # if n_params2 != n_params:
+        #     raise Exception("Number of parameters doens't fit with trainable parameters")
+            
+        return n_params2
+    
 
 #%% Old version
 

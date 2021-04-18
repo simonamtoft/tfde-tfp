@@ -60,7 +60,7 @@ class CPGaussian(tf.keras.Model):
         #log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
 
-    def init_parameters(self, dataset, mode = 'kmeans', N_init = 100):
+    def init_parameters(self, dataset, mode='kmeans', N_init=100):
         """ Initializes the means
         mode = 'kmeans' : Initialize using KMmeans algorithm
         mode = 'random' : Initialize using random
@@ -70,7 +70,7 @@ class CPGaussian(tf.keras.Model):
         # This is really ugly right now and could be fixed
         for data in (dataset): 
             break
-        
+
         if mode == 'kmeans':
             kmeans = KMeans(n_clusters=self.K).fit(data)
             mu_kmeans = kmeans.cluster_centers_
@@ -81,8 +81,7 @@ class CPGaussian(tf.keras.Model):
             means_max = np.max(data,axis=0)  
         else:
             raise Exception('Specified mu initialization not valid')
-            
-        
+
         # Find the limits of the variance
         std_max = np.std(data,axis=0)
         
@@ -122,7 +121,7 @@ class CPGaussian(tf.keras.Model):
         return loss_value
     
     def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
-            mute=False,N_init = 100,tolerance=1e-7):
+            mute=False, N_init=100, tolerance=1e-7):
         """ Fits model to a dataset """
         # Initialize parameters
         self.init_parameters(dataset, mode = mu_init, N_init = N_init)
@@ -134,8 +133,8 @@ class CPGaussian(tf.keras.Model):
         start_time = time.time()
         for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
             loss = 0
-            for i,x in enumerate(dataset):
-                loss += self.train_step(x,optimizer) 
+            for _, x in enumerate(dataset):
+                loss += self.train_step(x, optimizer) 
             losses.append(loss.numpy()/len(dataset))
             if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
                 break
@@ -144,9 +143,9 @@ class CPGaussian(tf.keras.Model):
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
-        losses = np.array(losses)
-    
+        losses = np.array(losses)    
         return losses
+
     def sample(self, N):
         # TO-DO
         # Simply sample from categorical distributions based on wk0 and W logits
@@ -162,10 +161,10 @@ class CPGaussian(tf.keras.Model):
         # Check that trainable params = actual number of parameters
         n_params2 = np.sum([np.prod(v.get_shape().as_list()) for v in self.trainable_variables])
         if n_params2 != n_params:
-            raise Exception("Number of parameters doens't fit with trainable parameters")
-            
+            raise Exception("Number of parameters doens't fit with trainable parameters") 
         return n_params
-    
+
+
 class CPGeneral(tf.keras.Model):
     def __init__(self, K, dists, params, mod, seed = None):
         """ M-dimensional Tensor Train with Gaussian Mixture Models 
@@ -217,7 +216,7 @@ class CPGeneral(tf.keras.Model):
         #log_likelihoods = tfm.log(likelihoods + np.finfo(np.float64).eps)
         return log_likelihoods
 
-    def init_parameters(self, dataset, mode = 'kmeans', N_init = 100):
+    def init_parameters(self, dataset, mode='kmeans', N_init=100):
         pass
     
     @tf.function
@@ -233,19 +232,19 @@ class CPGeneral(tf.keras.Model):
         return loss_value
     
     def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
-            mute=False,N_init = 100):
+            mute=False, N_init=100):
         """ Fits model to a dataset """
         # Initialize parameters
-        self.init_parameters(dataset, mode = mu_init, N_init = N_init)
+        self.init_parameters(dataset, mode=mu_init, N_init=N_init)
         
         if optimizer == None:
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
+        for epoch in tqdm(range(EPOCHS), desc='Training CPGeneral', disable=mute):    
             loss = 0
-            for i,x in enumerate(dataset):
+            for _, x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 
             losses.append(loss.numpy()/len(dataset))
                 
@@ -253,8 +252,8 @@ class CPGeneral(tf.keras.Model):
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
-    
         return losses
+
     def sample(self, N):
         # TO-DO
         # Figure out if there's some way to do this without loops...

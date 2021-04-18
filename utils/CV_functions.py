@@ -125,6 +125,7 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
     
     # create TF training dataset 
     ds_train = d.to_tf_dataset(X_train, batch_size=batch_size)
+    ds_test = d.to_tf_dataset(X_val, batch_size=batch_size)
     
     # Initialize error arrays
     error_train = np.zeros((len(Ks)))
@@ -132,21 +133,24 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
     train_learning_curves = []
     
     for i,K in tqdm(enumerate(Ks),desc='Fitting for K',total=len(Ks)):
+        test_loss = np.zeros(X_val.shape[0],dtype=np.float32)
         # Fit model to training data
         if model_name == 'TT':
             model = m.TensorTrainGaussian(K, M)
             train_loss = model.fit(ds_train, epochs, optimizer, mute=True, N_init=N_init)
-            test_loss = model(X_val)
+            for i,x in enumerate(ds_test):
+                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
         elif model_name == 'CP':
             model = m.CPGaussian(K, M)
             train_loss = model.fit(ds_train, epochs, optimizer, mute=True, mu_init='random',
                                    N_init=N_init)
-            test_loss = model(X_val)
+            for i,x in enumerate(ds_test):
+                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
         elif model_name == 'GMM':
-            
             model = m.GMM(K,M)
             train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=True)
-            test_loss = model(X_val)
+            for i,x in enumerate(ds_test):
+                test_loss[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
         else:
             raise Exception('Provided model_name not valid')
         

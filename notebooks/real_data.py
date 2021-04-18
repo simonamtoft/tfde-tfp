@@ -17,42 +17,66 @@ data, X_train, X_val, X_test = d.load_data(name)
 # X_train = d.get_ffjord_data('checkerboard',batch_size=1000)
 
 
-# Split into batches
-batch_size = 400
-dataset = d.to_tf_dataset(X_train, batch_size=batch_size)
-
 print(f'\nX_train.shape = {X_train.shape}')
 print(f'\nX_val.shape = {X_val.shape}')
-print(name)
-print('Data loaded...')
+print(name + ' data loaded...')
 
 
 #%% Define model and training parameters
-K = 10 # Number of components
-M = X_train.shape[1] # Dimension of data
-model = m.CPGaussian(K,M)
+# K = 10 # Number of components
+# M = X_train.shape[1] # Dimension of data
+# # model = m.CPGaussian(K,M)
 # model = m.TensorTrainGaussian(K,M)
 
-EPOCHS = 10
-optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
+# # Train on small subset
+# idx = np.random.choice(np.arange(X_train.shape[0]),size=100000)
+# X_train_small = X_train[idx]
+
+# # Split into batches
+# batch_size = 400
+# dataset = d.to_tf_dataset(X_train_small, batch_size=batch_size)
+
+# EPOCHS = 10
+# optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 # losses = model.fit(dataset,EPOCHS,optimizer,N_init=1)
 
-
 #%%
-N = 2000
-data = d.get_ffjord_data('checkerboard',batch_size=N)
+# X_test_1 = X_test[:2010]
 
-X_train = data[:int(N*0.8)]
-X_val = data[int(N*0.8):int(N*0.9)]
-X_test = data[int(N*0.9):]
+# batch_size = 400
+# dataset_test = d.to_tf_dataset(X_test_1, batch_size=batch_size)
+
+# y = np.zeros(X_test_1.shape[0],dtype=np.float32)
+# for i,x in enumerate(dataset_test):
+#     print(f'Indicies: {i*batch_size}:{i*batch_size + x.shape[0]}')
+#     y[i*batch_size:i*batch_size+x.shape[0]] = model(x).numpy()
+    
+
+# a = model(tf.convert_to_tensor(X_test_1)).numpy()
+
+#%% Holdout Cross-validation
+# N = 2000
+# data = d.get_ffjord_data('checkerboard',batch_size=N)
+
+# X_train = data[:int(N*0.8)]
+# X_val = data[int(N*0.8):int(N*0.9)]
+# X_test = data[int(N*0.9):]
+
+# Train on small subset
+idx = np.random.choice(np.arange(X_train.shape[0]),size=100000)
+X_train_small = X_train[idx]
 
 # Parameters
-Ks = [4,10,20]
+# Ks = [4,10,20,50,100]
+Ks = 100
 model_name = 'TT'
+N_init = 3
+epochs = 1
 
-CV_dict = utl.CV_holdout(X_train,X_val, Ks, model_name=model_name,
-                         epochs=100, batch_size=400, N_init = 2)
+CV_dict = utl.CV_holdout(X_train_small,X_val, Ks, model_name=model_name,
+                          epochs=epochs, batch_size=400, N_init = N_init)
 
 
 # Extract information from dict

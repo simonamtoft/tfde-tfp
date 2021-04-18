@@ -59,7 +59,9 @@ import utils as utl
 integrand = utl.unitTest(GTT, limits=[-6, 6])
 print(f'Density integrates to {round(integrand, 4)}')
 print('It should be = 1.0')
+
 # %%
+print("GENERAL TENSOR TRAIN")
 f,ax = plt.subplots(1, 3, figsize=(16, 5))
 
 # training loss
@@ -75,7 +77,9 @@ ax[1].set_title(name + ' with K = '+str(K))
 utl.plot_density(ax[2], GTT)
 ax[2].set_title('Density of ' + name + ' with K = ' + str(K))
 plt.show()
+
 # %%
+print("FIXED TENSOR TRAIN")
 f,ax = plt.subplots(1, 3, figsize=(16, 5))
 
 # training loss

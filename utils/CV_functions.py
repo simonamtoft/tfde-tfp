@@ -94,3 +94,70 @@ def CV_1_fold(data, Ks=np.arange(4, 8, 2), model_name='TT',
         err_tr = np.mean(error_train, axis=0) # mean training error over the CV folds
         err_tst = np.mean(error_test, axis=0) # mean test error over the CV folds
     return err_tr, err_tst
+
+def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT', 
+              epochs=200, optimizer=None, batch_size=100, N_init = 5):
+    """ Holdout Cross Validation to find optimal K
+    
+    Input
+        data        :   The data to fit and test on. The method will split this 
+                        into a training and testing self itself.
+        Ks          :   Array or int of K values for the model
+        model_name  :   Name of model to test ('TT', 'CP', 'GMM')
+        epochs      :   How many epochs to use for fitting of the model
+        optimizer   :   A tf.keras.optimizers to use for fitting the model
+        batch_size  :   The desired batch size for the training data
+        N_init      :   How many initalizations the model should do
+    
+    Return CV_dict with values
+        error_train      :   Error on the training set
+        error_val        :   Error on the testing set
+        learning_curves  : Learning curves for all the K
+    """ 
+
+    if optimizer == None:
+        optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+
+    if np.isscalar(Ks): # Transform
+        Ks = (Ks,)
+
+    M = X_train.shape[1] # Dimension of data
+    
+    # create TF training dataset 
+    ds_train = d.to_tf_dataset(X_train, batch_size=batch_size)
+    
+    # Initialize error arrays
+    error_train = np.zeros((len(Ks)))
+    error_val = np.zeros((len(Ks)))
+    train_learning_curves = []
+    
+    for i,K in tqdm(enumerate(Ks),desc='Fitting for K',total=len(Ks)):
+        # Fit model to training data
+        if model_name == 'TT':
+            model = m.TensorTrainGaussian(K, M)
+            train_loss = model.fit(ds_train, epochs, optimizer, mute=True, N_init=N_init)
+            test_loss = model(X_val)
+        elif model_name == 'CP':
+            model = m.CPGaussian(K, M)
+            train_loss = model.fit(ds_train, epochs, optimizer, mute=True, mu_init='random',
+                                   N_init=N_init)
+            test_loss = model(X_val)
+        elif model_name == 'GMM':
+            
+            model = m.GMM(K,M)
+            train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=True)
+            test_loss = model(X_val)
+        else:
+            raise Exception('Provided model_name not valid')
+        
+        train_learning_curves.append(train_loss)
+        error_train[i] = train_loss[-1]
+        error_val[i] = -tf.reduce_mean(test_loss).numpy()
+        
+    CV_dict = {
+        'error_train' : error_train,
+        'error_val' : error_val,
+        'learning_curves' : train_learning_curves
+        }
+
+    return CV_dict

@@ -122,7 +122,7 @@ class CPGaussian(tf.keras.Model):
         return loss_value
     
     def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
-            mute=False,N_init = 100):
+            mute=False,N_init = 100,tolerance=1e-7):
         """ Fits model to a dataset """
         # Initialize parameters
         self.init_parameters(dataset, mode = mu_init, N_init = N_init)
@@ -137,11 +137,14 @@ class CPGaussian(tf.keras.Model):
             for i,x in enumerate(dataset):
                 loss += self.train_step(x,optimizer) 
             losses.append(loss.numpy()/len(dataset))
+            if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
+                break
                 
         end_time = time.time()
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
+        losses = np.array(losses)
     
         return losses
     def sample(self, N):

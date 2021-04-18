@@ -75,6 +75,8 @@ class GMM:
         if not mute:
             print(f'Training time elapsed: {int(end_time-start_time)} seconds')
             print(f'Final loss: {losses[-1]}')
+            
+        losses = np.array(losses)
 
         return losses
             

@@ -6,6 +6,7 @@ from tqdm import tqdm
 tfd = tfp.distributions
 tfm = tf.math
 
+
 class TensorTrainModel(tf.keras.Model):
     def __init__(self, K, M, seed=None):
         super(TensorTrainModel, self).__init__()
@@ -36,7 +37,7 @@ class TensorTrainModel(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
 
-    def init_parameters(ds, N_init=None):
+    def init_parameters(self, ds, N_init=None):
         return NotImplementedError
 
     def fit(self, dataset, epochs=200, optimizer=None, mute=False,
@@ -63,7 +64,7 @@ class TensorTrainModel(tf.keras.Model):
         start_time = time.time()
         for epoch in tqdm(range(epochs), desc='Training TT', disable=mute):    
             loss = 0
-            for i, x in enumerate(dataset):
+            for _, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
             losses.append(loss.numpy() / len(dataset))
             if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
@@ -173,6 +174,7 @@ class TensorTrainGaussian(TensorTrainModel):
         Bstack = tf.transpose(tf.stack([B]*B.shape[2],axis=1),perm=[0,2,1,3])
         C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
         return C
+
     def log_space_product_vector_tf(self, a, B):
         """ Multiply vector with matrix in log domain (more stable)
         https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
@@ -241,6 +243,7 @@ class TensorTrainGaussian(TensorTrainModel):
         
         return n_params
 
+
 class TensorTrainGeneral(TensorTrainModel):
     def __init__(self, K, dists, params, mod, seed=None):
         """ M-dimensional Tensor Train with Gaussian Mixture Models 
@@ -256,7 +259,18 @@ class TensorTrainGeneral(TensorTrainModel):
         self.dists  = dists
         self.params = [ [tf.Variable(p, dtype=tf.float32) for p in lp] for lp in params ]
         self.mod = mod
-        return None
+
+    def fix_params(self):
+        return [
+            [
+                [
+                    self.params[m][l] 
+                    if not (m in self.mod and l in self.mod[m])
+                    else 
+                    self.mod[m][l](self.params[m][l])
+                ] for l in range(len(self.params[m])) # for each list of parameters
+            ] for m in range(self.M) # for each dimension
+        ]
 
     def call(self, X):
         """ Calculates the log-likelihood of datapoint(s) with M-dimensions
@@ -277,19 +291,9 @@ class TensorTrainGeneral(TensorTrainModel):
         # Go from logits -> weights
         wk0 = tf.nn.softmax(self.wk0_logits, axis=1) # axis 1 as it is (1, K0)
         W = [tf.nn.softmax(self.W_logits[i], axis=0) for i in range(self.M)]
-        
 
         # Modify params
-        params = [
-            [
-                [
-                    self.params[m][l] 
-                    if not (m in self.mod and l in self.mod[m])
-                    else 
-                    self.mod[m][l](self.params[m][l])
-                ] for l in range(len(self.params[m])) # for each list of parameters
-            ] for m in range(self.M) # for each dimension
-        ]
+        params = self.fix_params()
 
         product = tf.eye(wk0.shape[1]) # start out with identity matrix
         for i in range(self.M):
@@ -316,16 +320,7 @@ class TensorTrainGeneral(TensorTrainModel):
         # Figure out if there's some way to do this without loops...
 
         samples = []
-        params = [
-            [
-                [
-                    self.params[m][l] 
-                    if not (m in self.mod and l in self.mod[m])
-                    else 
-                    self.mod[m][l](self.params[m][l])
-                ] for l in range(len(self.params[m])) # for each list of parameters
-            ] for m in range(self.M) # for each dimension
-        ]
+        params = self.fix_params()
 
         for _ in range(N):
             sample = []

@@ -135,7 +135,7 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
     train_learning_curves = []
     
     for i,K in tqdm(enumerate(Ks),desc='Fitting for K',total=len(Ks),position=0,leave=True):
-        
+
         test_loss = np.zeros(X_val.shape[0],dtype=np.float32)
         # Fit model to training data
         if model_name == 'TT':

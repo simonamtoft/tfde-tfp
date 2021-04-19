@@ -37,8 +37,8 @@ class TensorTrainModel(tf.keras.Model):
         optimizer.apply_gradients(zip(gradients, tvars))
         return loss_value
 
-    def init_parameters(self, ds, N_init=None):
-        return NotImplementedError
+    # def init_parameters(self, ds, N_init=None):
+    #     return NotImplementedError
 
     def fit(self, dataset, epochs=200, optimizer=None, mute=False,
             N_init = 100,tolerance=1e-7):
@@ -62,7 +62,7 @@ class TensorTrainModel(tf.keras.Model):
 
         losses = []
         start_time = time.time()
-        for epoch in tqdm(range(epochs), desc='Training TT', disable=mute):    
+        for epoch in tqdm(range(epochs), desc='Training TT', disable=mute,position=0,leave=True):    
             loss = 0
             for _, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
@@ -148,7 +148,6 @@ class TensorTrainGaussian(TensorTrainModel):
         
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
-        # sigma = tfm.softplus(self.pre_sigma)
   
         if self.M < 7:
         # ######### Multiply in exp_domain
@@ -210,8 +209,8 @@ class TensorTrainGaussian(TensorTrainModel):
         std_max = np.max(np.std(x,axis=0))
         
         # Initialize parameter arrays
-        means = np.random.uniform(means_min, means_max, (N_init, self.K, self.K))
-        pre_sigmas = np.random.uniform(0, std_max, (N_init, self.K, self.K))
+        means = np.random.uniform(means_min, means_max, (N_init, self.M, self.K, self.K))
+        pre_sigmas = np.random.uniform(0, std_max, (N_init, self.M, self.K, self.K))
         
         # Initialize score array
         score = np.zeros((N_init))
@@ -223,6 +222,7 @@ class TensorTrainGaussian(TensorTrainModel):
             loss_value = -tf.reduce_mean(self(x)).numpy()
             score[i] = loss_value
         idx = np.argmax(score) # Index of best performing set
+
 
         # Set initial best values of parameters
         self.mu = tf.Variable(means[idx], name="mu", dtype=tf.dtypes.float32)

@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow_probability as tfp
 tfd = tfp.distributions
 
+
 def unitTest(model, limits=[-1,1], n_points=1000):
     """Integrate a density over a given limit in 2d-space
     To make a unit-test and verify that it is a density
@@ -33,6 +34,40 @@ def unitTest(model, limits=[-1,1], n_points=1000):
     # Compute integrand
     integrand = np.sum(p)*dx*dy
     return integrand
+
+
+def plot_density_3d(model, M, title="", limit=6, n_points=300):
+    # construct meshgrid
+    x, dx = np.linspace(-limit, limit, n_points, retstep=True)
+    y, dy = np.linspace(-limit, limit, n_points, retstep=True)
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    print(title)
+    integrals = []
+    f, ax = plt.subplots(1, M, figsize=(15, 5))
+    for i in range(M):
+        X = np.array([x_grid.ravel(), y_grid.ravel(), i * np.ones((n_points**2,))]).T
+
+        # Get density
+        p_log = model(X).numpy()
+        p = np.exp(p_log)
+
+        # Compute integrand
+        integral = np.sum(p)*dx*dy
+        integrals.append(integral)
+
+        im = ax[i].imshow(
+            p.reshape(n_points, n_points),
+            extent=(-limit, limit, -limit, limit),
+            origin='lower',
+            cmap='gray'
+        )
+        cbar = plt.colorbar(im, ax=ax[i])
+        cbar.ax.set_ylabel('inferno')
+    f.tight_layout()
+    print("Sum of categories is {}".format(np.sum(integrals)))
+
+
 
 #%% Function examples:
 if __name__ == '__main__':

@@ -11,16 +11,16 @@ tfd = tfp.distributions
 tfm = tf.math
 
 #%% Load data
-dataset_names = d.get_dataset_names()
-name = dataset_names[0]
-data, X_train, X_val, X_test = d.load_data(name)
+# dataset_names = d.get_dataset_names()
+# name = dataset_names[0]
+# data, X_train, X_val, X_test = d.load_data(name)
 
-# name = 'toy'; N = 5000
-# data = d.get_ffjord_data('checkerboard',batch_size=N)
+name = 'toy'; N = 5000
+data = d.get_ffjord_data('checkerboard',batch_size=N)
 
-# X_train = data[:int(N*0.8)]
-# X_val = data[int(N*0.8):int(N*0.9)]
-# X_test = data[int(N*0.9):]
+X_train = data[:int(N*0.8)]
+X_val = data[int(N*0.8):int(N*0.9)]
+X_test = data[int(N*0.9):]
 
 # Train on small subset
 idx = np.random.choice(np.arange(X_train.shape[0]),size=2000)
@@ -32,9 +32,9 @@ print(f'\nX_val.shape = {X_val.shape}')
 print(name + ' data loaded...')
 #%% Holdout Cross-validation
 
-Ks = [4,10,20,50]
+Ks = [2,4,6]
 model_name = 'TT'
-epochs = 2
+epochs = 4
 N_init = 2
 batch_size = 100
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
@@ -44,18 +44,21 @@ CV_dict = utl.CV_holdout(X_train_small,X_val, Ks, model_name=model_name,
 
 
 # Extract information from dict
-lr = CV_dict['learning_curves']
+train_learning_curves = CV_dict['train_learning_curves']
+val_learning_curves = CV_dict['val_learning_curves']
 error_train = CV_dict['error_train']
 error_val = CV_dict['error_val']
 
 # Choose random index to show learning curve
-idx = np.random.randint(0,len(Ks),1)[0]
+idx = np.argmin(error_val)
 
 f,ax = plt.subplots(1,2,figsize=(12,5))
-ax[0].plot(lr[idx],linewidth=2)
+ax[0].plot(train_learning_curves[idx],'k-',linewidth=2)
+ax[0].plot(val_learning_curves[idx],'r-',linewidth=2)
 ax[0].set_title(f'Learning curve for K = {Ks[idx]}')
 ax[0].set_xlabel('Iterations')
 ax[0].set_ylabel('Negative log-likelihood')
+ax[0].legend(['Train','Validation'])
 ax[1].plot(Ks,error_train,'k.-',markersize=10)
 ax[1].plot(Ks,error_val,'r.-',markersize=10)
 ax[1].set_ylabel('Negative log-likelihood')
@@ -66,7 +69,6 @@ ax[1].grid('on')
 plt.show()
 
 #%% Train for optimal K
-idx = np.argmin(error_val)
 K_opt = Ks[idx]
 
 if model_name == 'CP':

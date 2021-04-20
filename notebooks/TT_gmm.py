@@ -17,6 +17,10 @@ name = data_names[7]
 
 data = d.get_ffjord_data(name,batch_size=N)
 
+X_train = data[:int(N*0.8)]
+X_val = data[int(N*0.8):int(N*0.9)]
+X_test = data[int(N*0.9):]
+
 # Inspect the data
 f,ax = plt.subplots(figsize=(5,5))
 ax.plot(data[:, 0], data[:, 1], '.')
@@ -26,24 +30,28 @@ plt.show()
 
 # Split into batches
 batch_size = 100
-dataset = d.to_tf_dataset(data, batch_size=batch_size)
+dataset_train = d.to_tf_dataset(X_train, batch_size=batch_size)
+dataset_val = d.to_tf_dataset(X_val, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 12 # Number of components
+K = 10 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 400
+EPOCHS = 1000
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
-losses = model.fit(dataset,EPOCHS,optimizer)
+losses_train, losses_val = model.fit_val(dataset_train, dataset_val,EPOCHS,optimizer)
 
 f,ax = plt.subplots()
-ax.plot(range(len(losses)),np.array(losses))
+ax.plot(losses_train)
+ax.plot(losses_val)
 ax.set_title('Training loss')
 ax.set_xlabel('iteration')
+ax.legend(['Train','Validation'])
 plt.show()
+
 
 #%% Plot result
 

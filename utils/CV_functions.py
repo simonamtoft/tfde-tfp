@@ -127,44 +127,50 @@ def CV_holdout(X_train,X_val, Ks=np.arange(4, 8, 2), model_name='TT',
     
     # create TF training dataset 
     ds_train = d.to_tf_dataset(X_train, batch_size=batch_size)
-    ds_test = d.to_tf_dataset(X_val, batch_size=batch_size)
+    ds_val = d.to_tf_dataset(X_val, batch_size=batch_size)
     
     # Initialize error arrays
     error_train = np.zeros((len(Ks)))
     error_val = np.zeros((len(Ks)))
     train_learning_curves = []
+    val_learning_curves = []
     
     for i,K in tqdm(enumerate(Ks),desc='Fitting for K',total=len(Ks),position=0,leave=True):
 
-        test_loss = np.zeros(X_val.shape[0],dtype=np.float32)
+        # test_loss = np.zeros(X_val.shape[0],dtype=np.float32)
         # Fit model to training data
         if model_name == 'TT':
             model = m.TensorTrainGaussian(K, M)
-            train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, N_init=N_init)
-            for j,x in enumerate(ds_test):
-                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
-        elif model_name == 'CP':
-            model = m.CPGaussian(K, M)
-            train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, mu_init='random',
-                                   N_init=N_init)
-            for j,x in enumerate(ds_test):
-                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
-        elif model_name == 'GMM':
-            model = m.GMM(K,M)
-            train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=mute)
-            for j,x in enumerate(ds_test):
-                test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
+            train_loss,val_loss = model.fit_val(ds_train,ds_val,epochs,
+                                                 optimizer, mute=mute, N_init=N_init)
+            
+            # train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, N_init=N_init)
+            # for j,x in enumerate(ds_test):
+            #     test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
+        # elif model_name == 'CP':
+        #     model = m.CPGaussian(K, M)
+        #     train_loss = model.fit(ds_train, epochs, optimizer, mute=mute, mu_init='random',
+        #                            N_init=N_init)
+        #     for j,x in enumerate(ds_test):
+        #         test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
+        # elif model_name == 'GMM':
+        #     model = m.GMM(K,M)
+        #     train_loss = model.fit(X_train, EPOCHS=epochs, mu_init='random', mute=mute)
+        #     for j,x in enumerate(ds_test):
+        #         test_loss[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
         else:
             raise Exception('Provided model_name not valid')
         
         train_learning_curves.append(train_loss)
+        val_learning_curves.append(val_loss)
         error_train[i] = train_loss[-1]
-        error_val[i] = -tf.reduce_mean(test_loss).numpy()
+        error_val[i] = val_loss[-1]
         
     CV_dict = {
         'error_train' : error_train,
         'error_val' : error_val,
-        'learning_curves' : train_learning_curves
+        'train_learning_curves' : train_learning_curves,
+        'val_learning_curves' : val_learning_curves
         }
 
     return CV_dict

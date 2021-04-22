@@ -37,6 +37,28 @@ def unitTest(model, limits=[-1,1], n_points=1000):
     return integrand
 
 
+
+def plot_density_3d_paper(model, ax, limit=6, n_points=2000, cmap='gray'):
+    # construct meshgrid
+    x, dx = np.linspace(-limit, limit, n_points, retstep=True)
+    y, dy = np.linspace(-limit, limit, n_points, retstep=True)
+    x_grid, y_grid = np.meshgrid(x, y)
+
+    # f, ax = plt.subplots(1, 3, figsize=(15, 5))
+    for i in range(3):
+        X = np.array([x_grid.ravel(), y_grid.ravel(), i * np.ones((n_points**2,))]).T
+        # Get density
+        p_log = model(X).numpy()
+        p = np.exp(p_log)
+        im = ax[i].imshow(
+            p.reshape(n_points, n_points),
+            extent=(-limit, limit, -limit, limit),
+            origin='lower',
+            cmap=cmap
+        )
+        ax[i].axis('off')
+
+
 def plot_density_3d(model, M, title="", limit=6, n_points=300):
     # construct meshgrid
     x, dx = np.linspace(-limit, limit, n_points, retstep=True)

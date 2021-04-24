@@ -172,7 +172,7 @@ class TensorTrainGaussian(TensorTrainModel):
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
   
-        if False:#self.M < 7:
+        if self.M < 7:
         # ######### Multiply in exp_domain
             product = tf.eye(wk0.shape[1]) # start out with identity matrix
             for i in range(self.M):

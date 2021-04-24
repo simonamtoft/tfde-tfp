@@ -1,4 +1,7 @@
-
+.ipynb_checkpoints
+notebooks/.ipynb_checkpoints
+.venv
+venv
 utils/__pycache__/plotting.cpython-37.pyc
 *.pyc
 accesstoken

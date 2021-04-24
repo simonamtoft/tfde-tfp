@@ -132,36 +132,6 @@ class TensorTrainModel(tf.keras.Model):
         losses_val = np.array(losses_val)
         return losses_train, losses_val
 
-    def log_space_product_tf(self, A, B):
-        """ Multiply matrices in log domain (more stable)
-        https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
-        
-        input : 
-            A = Tensor([N,K,M])
-            B = Tensor([N,M,K])
-        output :
-            C = Tensor([N,K,K])
-        """
-        Astack = tf.transpose(tf.stack([A]*A.shape[1],axis=1),perm=[0,3,2,1])
-        Bstack = tf.transpose(tf.stack([B]*B.shape[2],axis=1),perm=[0,2,1,3])
-        C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
-        return C
-
-    def log_space_product_vector_tf(self, a, B):
-        """ Multiply vector with matrix in log domain (more stable)
-        https://stackoverflow.com/questions/36467022/handling-matrix-multiplication-in-log-space-in-python
-        
-        input : 
-            a = Tensor([N,1,K])
-            B = Tensor([N,K,K])
-        output :
-            C = Tensor([N,K])
-        """
-        Astack = tf.transpose(a,perm=[0,2,1])
-        Bstack = tf.transpose(B,perm=[0,1,2])
-        C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
-        return C
-
 
 class TensorTrainGaussian(TensorTrainModel):
     def __init__(self, K, M, seed=None):
@@ -175,8 +145,6 @@ class TensorTrainGaussian(TensorTrainModel):
         super(TensorTrainGaussian, self).__init__(K, M, seed)
         mu = np.random.uniform(-4, 4, (self.M, self.K, self.K))
         pre_sigma = np.random.uniform(0, 5, (self.M, self.K, self.K))
-        # mu = np.random.uniform(-4, 4, (self.K, self.K))
-        # pre_sigma = np.random.uniform(0, 5, (self.K, self.K))
         self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
         self.pre_sigma = tf.Variable(pre_sigma, name="sigma", dtype=tf.dtypes.float32)
         return None
@@ -204,7 +172,7 @@ class TensorTrainGaussian(TensorTrainModel):
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
   
-        if self.M < 7:
+        if False:#self.M < 7:
         # ######### Multiply in exp_domain
             product = tf.eye(wk0.shape[1]) # start out with identity matrix
             for i in range(self.M):
@@ -213,10 +181,6 @@ class TensorTrainGaussian(TensorTrainModel):
                       # Make data broadcastable into (n, km, kn)
                       X[:, tf.newaxis, tf.newaxis, i]
                   )
-                #   tfm.log(W[i]) + tfd.Normal(self.mu, sigma).log_prob(
-                #       # Make data broadcastable into (n, km, kn)
-                #       X[:, tf.newaxis, tf.newaxis, i]
-                #   )
               ) # intermediary calculation in log-domain -> exp after.
               # Keep batch dimension in place, transpose matrices
               product = product @ tf.transpose(result, perm=[0, 2, 1])
@@ -236,12 +200,11 @@ class TensorTrainGaussian(TensorTrainModel):
             for i in range(1,self.M):
                 result = tfm.log(W[i]) + tfd.Normal(self.mu[i], sigma[i]).log_prob(
                       X[:, tf.newaxis, tf.newaxis, i])    
-                product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
+                product = tf.reduce_logsumexp(product[:,:,:, tf.newaxis] + tf.transpose(result, perm=[0,2,1])[:, tf.newaxis, :, :], axis=2)
             
             # Multiply with wk0
-            prod = self.log_space_product_vector_tf(tf.expand_dims(tfm.log(wk0),axis=1),product)
+            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2))
             log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
-        
         return log_likelihoods
 
     def sample(self, N):
@@ -377,13 +340,12 @@ class TensorTrainGeneral(TensorTrainModel):
             product = tf.transpose(product, perm=[0, 2, 1])
             for i in range(1,self.M):
                 result = tfm.log(W[i]) + self.dists[i](*params[i]).log_prob(
-                      X[:, tf.newaxis, tf.newaxis, i])    
-                product = self.log_space_product_tf(product, tf.transpose(result, perm=[0, 2, 1]))
+                      X[:, tf.newaxis, tf.newaxis, i])  
+                product = tf.reduce_logsumexp(product[:,:,:, tf.newaxis] + tf.transpose(result, perm=[0,2,1])[:, tf.newaxis, :, :], axis=2)
             
             # Multiply with wk0
-            prod = self.log_space_product_vector_tf(tf.expand_dims(tfm.log(wk0),axis=1),product)
+            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2))
             log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
-
         return log_likelihoods
 
     def sample(self, N):

@@ -203,7 +203,7 @@ class TensorTrainGaussian(TensorTrainModel):
                 product = tf.reduce_logsumexp(product[:,:,:, tf.newaxis] + tf.transpose(result, perm=[0,2,1])[:, tf.newaxis, :, :], axis=2)
             
             # Multiply with wk0
-            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2))
+            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2), axis=1)
             log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
         return log_likelihoods
 
@@ -344,7 +344,7 @@ class TensorTrainGeneral(TensorTrainModel):
                 product = tf.reduce_logsumexp(product[:,:,:, tf.newaxis] + tf.transpose(result, perm=[0,2,1])[:, tf.newaxis, :, :], axis=2)
             
             # Multiply with wk0
-            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2))
+            prod = tf.squeeze(tfm.reduce_logsumexp(tfm.log(wk0[:,:,tf.newaxis]) + product[:, tf.newaxis, :, :], axis=2), axis=1)
             log_likelihoods = tf.reduce_logsumexp(prod,axis=1)
         return log_likelihoods
 

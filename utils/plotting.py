@@ -30,7 +30,7 @@ def plot_contours(ax, data, model, limit=4, n_points=1000, alpha=1.0):
     return None
 
 
-def plot_density(ax, model, limit=4, n_points=1000, cmap='gray'):
+def plot_density(ax, model, limit=4, n_points=1000, cmap='gray', cbar=True, axis=True):
     """visualize the distribution as a density plot
     
     Inputs
@@ -61,6 +61,12 @@ def plot_density(ax, model, limit=4, n_points=1000, cmap='gray'):
         origin='lower',
         cmap=cmap
     )
-    cbar = plt.colorbar(im, ax=ax)
-    cbar.ax.set_ylabel('Likelihood')
+
+    if not axis:
+        ax.axis('off')
+
+    if cbar:
+        cbar = plt.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('Likelihood')
+
     return integrand

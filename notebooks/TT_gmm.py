@@ -77,6 +77,3 @@ print('It should be = 1.0')
 
 
 
-
-
-

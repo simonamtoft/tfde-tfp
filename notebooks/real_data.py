@@ -12,7 +12,7 @@ tfm = tf.math
 
 #%% Load data
 # dataset_names = d.get_dataset_names()
-# name = dataset_names[0]
+# name = dataset_names[1]
 # data, X_train, X_val, X_test = d.load_data(name)
 
 name = 'toy'; N = 5000
@@ -32,11 +32,11 @@ print(f'\nX_val.shape = {X_val.shape}')
 print(name + ' data loaded...')
 #%% Holdout Cross-validation
 
-Ks = [2,4,6]
+Ks = [2,4,5]
 model_name = 'TT'
-epochs = 4
+epochs = 10
 N_init = 2
-batch_size = 100
+batch_size = 400
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 CV_dict = utl.CV_holdout(X_train_small,X_val, Ks, model_name=model_name,
@@ -93,5 +93,46 @@ ds_small = d.to_tf_dataset(X_train_small, batch_size=batch_size)
 # test_loss = -tf.reduce_mean(errors_test).numpy()
 # print(f'Test error : {test_loss}')
 
+#%%
+# def log_space_product_tf(A, B):
+#     Astack = tf.transpose(tf.stack([A]*A.shape[1],axis=1),perm=[0,3,2,1])
+#     Bstack = tf.transpose(tf.stack([B]*B.shape[2],axis=1),perm=[0,2,1,3])
+#     C = tfm.reduce_logsumexp(Astack+Bstack, axis=1)
+#     return C
+# N = 1
+# M = 2
+# K = 2
+# aaaaa = np.random.rand(N,M,K)
+# bbbbb = np.random.rand(N,K,M)
+# A = np.log(aaaaa)
+# B = np.log(bbbbb)
+# A = tf.convert_to_tensor(A)
+# B = tf.convert_to_tensor(B)
+
+
+# c = aaaaa @ bbbbb
+# C = log_space_product_tf(A,B)
+
+# print(np.log(c))
+# print(C.numpy())
+
+# import torch
+# a = torch.tensor(aaaaa)
+# b = torch.tensor(bbbbb)
+
+# bsz, p, m = a.size()
+# _,_,n = b.size()
+# aa = a.unsqueeze(2).expand(bsz,p,n,m)
+# bb = b.unsqueeze(1).transpose(2,3).expand(bsz,p,n,m)
+# cc = torch.logsumexp(aa+bb,dim=1)
+
+
+# print(cc.numpy())
+
+# AA = tf.broadcast_to(tf.expand_dims(A, axis=2),[N,M,M,K])
+# BB = tf.broadcast_to(tf.transpose(tf.expand_dims(B, axis=1),perm=[0,1,2,3]),[N,M,M,K])
+# CC = tfm.reduce_logsumexp(AA+BB,axis=1)
+
+# print(CC.numpy())
 
 

@@ -46,6 +46,7 @@ class CPGaussian(tf.keras.Model):
         
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = tfm.softplus(self.sigma)
+        sigma += np.finfo(np.float32).eps # Add small value for numerical stability
         
         product = tfm.log(W)
         for i in range(self.M):
@@ -145,6 +146,60 @@ class CPGaussian(tf.keras.Model):
             print(f'Final loss: {losses[-1]}')
         losses = np.array(losses)    
         return losses
+    def fit_val(self, dataset_train, dataset_val, epochs=200, optimizer=None, mute=False,
+            N_init = 100,tolerance=1e-6,N_CONVERGENCE = 5, mu_init='kmeans'):
+        """Fits model to a training dataset and validated on a validation dataset
+        Input
+            dataset     (tf.dataset)            :   The training data to fit the model on.
+                                                    Has to be converted to a TF dataset.
+            epochs      (int)                   :   The number of epochs to train over.
+            optimizer   (tf.keras.optimizers)   :   The optimizer used for training the model.
+                                                    Default is the Adam optimizer with lr=1e-3
+            mute        (bool)                  :   Whether to time and print after training or not.
+            N_CONVERGENCE(int)                  :   Number of values to look at for convergence
+        Return
+            losses      (array)                 :   Array of the loss after each epoch
+        """
+        
+        if optimizer == None:
+            optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+          
+        # Initialize parameters
+        self.init_parameters(dataset_train, mode = mu_init, N_init = N_init)
+        
+        # Get batch size of validation dataset
+        batch_size_val = next(iter(dataset_val)).shape[0]
+        validation_size = 0
+        for x in dataset_val:
+            validation_size += x.shape[0]
+
+        losses_train = []
+        losses_val = []
+        for epoch in tqdm(range(epochs), desc='Training TT', disable=mute,position=0,leave=True):    
+            loss = 0
+            for _, x in enumerate(dataset_train):
+                loss += self.train_step(x, optimizer) 
+            losses_train.append(loss.numpy() / len(dataset_train))
+            
+            # Iterate over validation set
+            loss_val = np.zeros(validation_size,dtype=np.float32)
+            for j,x in enumerate(dataset_val):
+                loss_val[j*batch_size_val:j*batch_size_val+x.shape[0]] = self(x).numpy()
+            losses_val.append(-np.mean(loss_val))
+            
+            # Check the last 4 iterations
+            diff = np.zeros((N_CONVERGENCE,))
+            for j,lists in enumerate(zip(losses_val[-(N_CONVERGENCE+1):-1], losses_val[-N_CONVERGENCE:])):
+                diff[j] = lists[0]-lists[1]
+            
+            condition1 = all(abs(diff) < tolerance)
+            condition2 = all(diff < 0)  
+            if (epoch > N_CONVERGENCE+10) and (condition1 or condition2):
+                break
+
+        losses_train = np.array(losses_train)
+        losses_val = np.array(losses_val)
+        return losses_train, losses_val
 
     def sample(self, N):
         # TO-DO

@@ -17,6 +17,17 @@ def get_fair_Ks(Ks_tt, M, even=False):
         Ks_gmm.append(K_gmm)
     return Ks_cp, Ks_gmm
 
+def get_free_params(Ks_tt,M):
+    """ Given a list of Tensor Train K computes the corresponding
+    number of free parameters
+    """
+    free_params = []
+    for K in Ks_tt:
+        n_tt = m.TensorTrainGaussian(K, M).n_parameters()
+        free_params.append(n_tt)
+    
+    return free_params
+
 
 def compute_fair(K_tt, M, even=False):
     """ Computes fair parameters.
@@ -45,10 +56,14 @@ def compute_fair(K_tt, M, even=False):
 
     # number of free parameters for GMM
     K_gmm = K_tt
-    n_gmm = K_gmm * (1 + M + M*M)
+    n_gmm = m.GMM(K_gmm, M).n_parameters()
     while n_gmm < n_tt:
         K_gmm += addi
-        n_gmm = K_gmm * (1 + M + M*M)
+        n_gmm = m.GMM(K_gmm, M).n_parameters()
+    # n_gmm = K_gmm * (1 + M + M*M)
+    # while n_gmm < n_tt:
+    #     K_gmm += addi
+    #     n_gmm = K_gmm * (1 + M + M*M)
 
     # number of free parameters for CP
     K_cp = K_gmm

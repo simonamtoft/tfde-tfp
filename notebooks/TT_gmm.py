@@ -10,6 +10,11 @@ import models as m
 tfd = tfp.distributions
 tfm = tf.math
 
+# if tf.test.gpu_device_name(): 
+#     print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
+# else:
+#     print("Please install GPU version of TF")
+
 #%% Load data
 N = 2000
 data_names = d.get_toy_names()

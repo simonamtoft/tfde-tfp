@@ -11,16 +11,16 @@ tfd = tfp.distributions
 tfm = tf.math
 
 #%% Load data
-# dataset_names = d.get_dataset_names()
-# name = dataset_names[1]
-# data, X_train, X_val, X_test = d.load_data(name)
+dataset_names = d.get_dataset_names()
+name = dataset_names[1]
+data, X_train, X_val, X_test = d.load_data(name)
 
-name = 'toy'; N = 5000
-data = d.get_ffjord_data('checkerboard',batch_size=N)
+# name = 'toy'; N = 5000
+# data = d.get_ffjord_data('checkerboard',batch_size=N)
 
-X_train = data[:int(N*0.8)]
-X_val = data[int(N*0.8):int(N*0.9)]
-X_test = data[int(N*0.9):]
+# X_train = data[:int(N*0.8)]
+# X_val = data[int(N*0.8):int(N*0.9)]
+# X_test = data[int(N*0.9):]
 
 # Train on small subset
 idx = np.random.choice(np.arange(X_train.shape[0]),size=2000)

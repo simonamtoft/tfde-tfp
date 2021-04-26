@@ -28,16 +28,16 @@ class GMM:
         if seed != None:
             tf.random.set_seed(seed)
 
-        # Initialize model weights
-        mu = np.zeros((self.K,self.M))
-        sigma = np.ones((self.K,self.M))
-        W_logits = np.ones((1, self.K))      
+        # # Initialize model weights
+        # mu = np.zeros((self.K,self.M))
+        # sigma = np.ones((self.K,self.M))
+        # W_logits = np.ones((1, self.K))      
         
-         # Define as TensorFlow variables
-        self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
-        self.sigma = tf.Variable(sigma, name="sigma", dtype=tf.dtypes.float32)
-        self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
-        self.gmm_model = GaussianMixture(self.K, covariance_type='full')
+        #  # Define as TensorFlow variables
+        # self.mu = tf.Variable(mu, name="mu", dtype=tf.dtypes.float32)
+        # self.sigma = tf.Variable(sigma, name="sigma", dtype=tf.dtypes.float32)
+        # self.W_logits = tf.Variable(W_logits, name="W_logits", dtype=tf.dtypes.float32)
+        # self.gmm_model = GaussianMixture(self.K, covariance_type='full')
         
         return None
     
@@ -79,7 +79,33 @@ class GMM:
         losses = np.array(losses)
 
         return losses
+    
+    def fit_full(self, data, EPOCHS=200, mu_init='kmeans',N_init=100):
+
+        with warnings.catch_warnings(): 
+            warnings.simplefilter("ignore")
+            model = GaussianMixture(self.K, covariance_type='full',n_init=N_init, 
+                                    tol=1e-7, reg_covar=1e-6, init_params=mu_init
+                                    ,max_iter = EPOCHS)
+            model.fit(data)
+
+        loss = -np.mean(model.score_samples(data))
+        
+        # Set final model
+        self.gmm_model = model
+        self.mu = tf.Variable(model.means_, name="mu", dtype=tf.dtypes.float32)
+        self.sigma = tf.Variable(model.covariances_, name="sigma", dtype=tf.dtypes.float32)
+        self.W_logits = tf.Variable(model.weights_, name="W_logits", dtype=tf.dtypes.float32)
             
+        return loss
             
+    def n_parameters(self):
+        """ Returns the number of parameters in model """
+        n_params = 0
+        n_params += self.K # From W_k0
+        n_params += self.K*self.M*self.M # From sigma
+        n_params += self.K*self.M # From mu
+        
+        return n_params
             
             

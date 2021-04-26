@@ -30,7 +30,7 @@ def plot_contours(ax, data, model, limit=4, n_points=1000, alpha=1.0):
     return None
 
 
-def plot_density(ax, model, limit=4, n_points=1000, cmap='gray'):
+def plot_density(ax, model, limit=4, n_points=1000, cmap='gray', cbar=True, axis=True, gmm=False):
     """visualize the distribution as a density plot
     
     Inputs
@@ -48,7 +48,11 @@ def plot_density(ax, model, limit=4, n_points=1000, cmap='gray'):
     X = np.array([x_grid.ravel(), y_grid.ravel()]).T
     
     # probabilities
-    p_log = model(X).numpy()
+    if gmm == True:
+        p_log = model.score_samples(X)
+    else:
+        p_log = model(X).numpy()
+
     p = np.exp(p_log)
 
     # sum probs
@@ -61,6 +65,12 @@ def plot_density(ax, model, limit=4, n_points=1000, cmap='gray'):
         origin='lower',
         cmap=cmap
     )
-    cbar = plt.colorbar(im, ax=ax)
-    cbar.ax.set_ylabel('Likelihood')
+
+    if not axis:
+        ax.axis('off')
+
+    if cbar:
+        cbar = plt.colorbar(im, ax=ax)
+        cbar.ax.set_ylabel('Likelihood')
+
     return integrand

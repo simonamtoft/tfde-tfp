@@ -6,6 +6,13 @@ import theano.tensor as tt
 import matplotlib.pyplot as plt
 import _pickle as pickle
 
+def convert_to_bits_dim(neg_log_likelihood,M=784):
+    """ Converts negative log-likelihood to bits/dim
+     Used for image datasets (MNIST and CIFAR10)
+    """
+    bits_dim = -((-neg_log_likelihood/(M))-np.log(256))/np.log(2)
+    
+    return bits_dim
 
 def isposint(n):
     """

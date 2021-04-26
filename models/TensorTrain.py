@@ -41,7 +41,7 @@ class TensorTrainModel(tf.keras.Model):
     #     return NotImplementedError
 
     def fit(self, dataset, epochs=200, optimizer=None, mute=False,
-            N_init = 100,tolerance=1e-7):
+            N_init = 100,tolerance=1e-7,earlyStop=True):
         """Fits model to a dataset
         Input
             dataset     (tf.dataset)            :   The training data to fit the model on.
@@ -61,19 +61,14 @@ class TensorTrainModel(tf.keras.Model):
         self.init_parameters(dataset, N_init=N_init)
 
         losses = []
-        start_time = time.time()
         for epoch in tqdm(range(epochs), desc='Training TT', disable=mute,position=0,leave=True):    
             loss = 0
             for _, x in enumerate(dataset):
                 loss += self.train_step(x, optimizer) 
             losses.append(loss.numpy() / len(dataset))
-            if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
+            if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance) and earlyStop:
                 break
 
-        end_time = time.time()
-        if not mute:
-            print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-            print(f'Final loss: {losses[-1]}')
         losses = np.array(losses)
         return losses
     
@@ -131,6 +126,12 @@ class TensorTrainModel(tf.keras.Model):
         losses_train = np.array(losses_train)
         losses_val = np.array(losses_val)
         return losses_train, losses_val
+    def convert_to_bits_dim(self, neg_log_likelihood):
+        """ Converts negative log-likelihood to bits/dim
+        Used for image datasets (MNIST and CIFAR10)
+        """
+        bits_dim = -((-neg_log_likelihood/(self.M))-np.log(256))/np.log(2)
+        return bits_dim
 
 
 class TensorTrainGaussian(TensorTrainModel):

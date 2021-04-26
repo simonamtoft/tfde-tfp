@@ -2,7 +2,7 @@ from .plotting import plot_contours, plot_density
 from .density_functions import unitTest, plot_density_3d, plot_density_3d_paper, \
     plot_density_2d_paper
 from .CV_functions import CV_1_fold, CV_holdout
-from .helpers import get_fair_Ks
+from .helpers import get_fair_Ks,get_free_params
 
 # From ffjord util functions
 from .ffjord_util_functions import isposint

@@ -122,7 +122,7 @@ class CPGaussian(tf.keras.Model):
         return loss_value
     
     def fit(self, dataset, EPOCHS=200, optimizer=None, mu_init='kmeans',
-            mute=False, N_init=100, tolerance=1e-7):
+            mute=False, N_init=100, tolerance=1e-7,earlyStop=True):
         """ Fits model to a dataset """
         # Initialize parameters
         self.init_parameters(dataset, mode = mu_init, N_init = N_init)
@@ -131,7 +131,7 @@ class CPGaussian(tf.keras.Model):
             optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
         losses = []
-        start_time = time.time()
+        # start_time = time.time()
         for epoch in tqdm(range(EPOCHS), desc='Training CP', disable=mute):    
             loss = 0
             for _, x in enumerate(dataset):
@@ -140,10 +140,10 @@ class CPGaussian(tf.keras.Model):
             if (epoch > 3) and (abs(losses[-2]-losses[-1]) < tolerance):
                 break
                 
-        end_time = time.time()
-        if not mute:
-            print(f'Training time elapsed: {int(end_time-start_time)} seconds')
-            print(f'Final loss: {losses[-1]}')
+        # end_time = time.time()
+        # if not mute:
+        #     print(f'Training time elapsed: {int(end_time-start_time)} seconds')
+        #     print(f'Final loss: {losses[-1]}')
         losses = np.array(losses)    
         return losses
     def fit_val(self, dataset_train, dataset_val, epochs=200, optimizer=None, mute=False,

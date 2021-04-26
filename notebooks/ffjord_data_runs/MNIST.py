@@ -28,7 +28,7 @@ print(name + ' data loaded...')
 
 #%% Parameters
 model_name = 'TT'
-epochs = 10
+epochs = 500
 N_init = 5 # Number of random initializations to do
 batch_size = 100
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
@@ -43,8 +43,7 @@ X_val_small = X_val[idx_val]
 #%% Perform hold-out cross validation
 
 # List of component sizes to go through
-# Ks = [6,10,15,25,30]
-Ks = [2,4,6,8,10]
+Ks = [6,10,20,30,40,100]
 
 CV_dict = utl.CV_holdout(X_train_small,X_val_small, Ks, model_name=model_name,
                          epochs=epochs, batch_size=batch_size, N_init = N_init)
@@ -86,7 +85,7 @@ if model_name == 'CP':
 else:
   model = m.TensorTrainGaussian(K_opt,M)
 
-epochs = 10
+epochs = 1000
 
 # Split into batches
 ds_train = d.to_tf_dataset(X_train, batch_size=batch_size)
@@ -95,7 +94,7 @@ ds_val = d.to_tf_dataset(X_val, batch_size=batch_size)
 ds_val_small = d.to_tf_dataset(X_val_small, batch_size=batch_size)
 
 # Train and plot
-losses_train, losses_val = model.fit_val(ds_train_small, ds_val_small,
+losses_train, losses_val = model.fit_val(ds_train, ds_val,
                                          epochs,optimizer,N_init = N_init)
 
 f,ax = plt.subplots(figsize=(12,5))

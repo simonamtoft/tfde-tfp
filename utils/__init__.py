@@ -24,3 +24,4 @@ from .ffjord_util_functions import select_theano_act_function
 from .ffjord_util_functions import copy_model_parms
 from .ffjord_util_functions import one_hot_encode
 from .ffjord_util_functions import make_folder
+from .ffjord_util_functions import convert_to_bits_dim

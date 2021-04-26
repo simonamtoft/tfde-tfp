@@ -115,4 +115,5 @@ for j,x in tqdm(enumerate(dataset_test),desc='Testing',position=0,leave=True,tot
   errors_test[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
 
 test_loss = -np.mean(errors_test)
-print(f'\nTest error : {test_loss}')
+test_loss_bits_dim = utl.convert_to_bits_dim(test_loss,model.M)
+print(f'\nTest error : {test_loss_bits_dim}')

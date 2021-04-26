@@ -11,6 +11,9 @@ import datasets as d
 tfd = tfp.distributions
 tfm = tf.math
 
+# -((b/(3*32**2))-np.log(128))/np.log(2)
+# -((b/(3*32**2))-np.log(256))/np.log(2)
+
 #%% Load data
 # dataset_names = d.get_dataset_names()
 # name = dataset_names[3]

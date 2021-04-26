@@ -218,6 +218,12 @@ class CPGaussian(tf.keras.Model):
         if n_params2 != n_params:
             raise Exception("Number of parameters doens't fit with trainable parameters") 
         return n_params
+    def convert_to_bits_dim(self, neg_log_likelihood):
+        """ Converts negative log-likelihood to bits/dim
+        Used for image datasets (MNIST and CIFAR10)
+        """
+        bits_dim = -((-neg_log_likelihood/(self.M))-np.log(256))/np.log(2)
+        return bits_dim
 
 
 class CPGeneral(tf.keras.Model):

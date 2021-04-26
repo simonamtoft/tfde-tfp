@@ -126,6 +126,12 @@ class TensorTrainModel(tf.keras.Model):
         losses_train = np.array(losses_train)
         losses_val = np.array(losses_val)
         return losses_train, losses_val
+    def convert_to_bits_dim(self, neg_log_likelihood):
+        """ Converts negative log-likelihood to bits/dim
+        Used for image datasets (MNIST and CIFAR10)
+        """
+        bits_dim = -((-neg_log_likelihood/(self.M))-np.log(256))/np.log(2)
+        return bits_dim
 
 
 class TensorTrainGaussian(TensorTrainModel):

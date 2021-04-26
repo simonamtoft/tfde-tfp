@@ -79,7 +79,7 @@ plt.show()
 #%% Fit new model      (Set optimal K either directly of from cross-validation)
 idx = np.argmin(error_val)
 K_opt = Ks[idx]
-# K_opt = 30
+# K_opt = 10
 
 if model_name == 'CP':
   model = m.CPGaussian(K_opt,M)
@@ -115,4 +115,5 @@ for j,x in tqdm(enumerate(dataset_test),desc='Testing',position=0,leave=True,tot
   errors_test[j*batch_size:j*batch_size+x.shape[0]] = model(x).numpy()
 
 test_loss = -np.mean(errors_test)
-print(f'\nTest error : {test_loss}')
+test_loss_bits_dim = utl.convert_to_bits_dim(test_loss,model.M)
+print(f'\nTest error : {test_loss_bits_dim}')

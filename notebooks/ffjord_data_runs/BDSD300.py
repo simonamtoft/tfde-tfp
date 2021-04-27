@@ -28,9 +28,9 @@ print(name + ' data loaded...')
 
 #%% Parameters
 model_name = 'TT'
-epochs = 10
+epochs = 400
 N_init = 5 # Number of random initializations to do
-batch_size = 100
+batch_size = 1000
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 # Train on small subset
@@ -43,8 +43,7 @@ X_val_small = X_val[idx_val]
 #%% Perform hold-out cross validation
 
 # List of component sizes to go through
-# Ks = [6,10,15,25,30]
-Ks = [2,4,6,8,10]
+Ks = [10,30,40,50]
 
 CV_dict = utl.CV_holdout(X_train_small,X_val_small, Ks, model_name=model_name,
                          epochs=epochs, batch_size=batch_size, N_init = N_init)
@@ -86,7 +85,7 @@ if model_name == 'CP':
 else:
   model = m.TensorTrainGaussian(K_opt,M)
 
-epochs = 10
+epochs = 1000
 
 # Split into batches
 ds_train = d.to_tf_dataset(X_train, batch_size=batch_size)

@@ -43,7 +43,7 @@ K = 10 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
-EPOCHS = 1000
+EPOCHS = 400
 optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 #%% Train model 
@@ -76,6 +76,8 @@ plt.show()
 integrand = utl.unitTest(model,limits=[-6,6],n_points=200)
 print(f'Density integrates to {round(integrand,4)}')
 print('It should be = 1.0')
+
+
 
 
 

@@ -5,7 +5,6 @@
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -W 23:59
 #BSUB -R "rusage[mem=8GB]"
-#BSUB -u marc@boeg.io
 #BSUB -B
 ### -- send notification at completion--
 #BSUB -N

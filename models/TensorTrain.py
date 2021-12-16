@@ -172,7 +172,7 @@ class TensorTrainGaussian(TensorTrainModel):
         
         # Go from raw values -> strictly positive values (ReLU approx.)
         sigma = [tfm.softplus(self.pre_sigma[i]) for i in range(self.M)]
-        sigma += np.finfo(np.float32).eps # Add small value for numerical stability
+        # sigma += np.finfo(np.float32).eps # Add small value for numerical stability
   
         if self.M < 7:
         # ######### Multiply in exp_domain

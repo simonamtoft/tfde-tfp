@@ -16,7 +16,7 @@ tfm = tf.math
 #     print("Please install GPU version of TF")
 
 #%% Load data
-N = 2000
+N = 1000
 data_names = d.get_toy_names()
 name = data_names[7]
 
@@ -39,7 +39,7 @@ dataset_train = d.to_tf_dataset(X_train, batch_size=batch_size)
 dataset_val = d.to_tf_dataset(X_val, batch_size=batch_size)
 
 #%% Define model and training parameters
-K = 10 # Number of components
+K = 8 # Number of components
 M = 2 # Dimension of data
 model = m.TensorTrainGaussian(K, M,seed = 2)
 
